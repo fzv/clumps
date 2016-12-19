@@ -9,6 +9,10 @@
 * string
 */
 #include <vector>
+#include <algorithm>
+/*
+* find
+*/
 #include <fstream>
 /*
 * ifstream
@@ -22,7 +26,7 @@
 #include "sdsl/lcp.hpp"
 
 /******************************* FUNCTION DECLARATIONS */
-int get_lcp(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y);
+int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y);
 
 /******************************* MAIN FUNCTION */
 
@@ -105,7 +109,7 @@ for (int i=1; i<n+1; i++){
 		}
 	}
 }
-//for (int i=0; i<tt.size(); i++) std::cout << tt[i] << " "; std::cout << std::endl;
+for (int i=0; i<tt.size(); i++) std::cout << tt[i] << " "; std::cout << std::endl;
 
 /* construct array E */
 std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
@@ -114,11 +118,23 @@ std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> e(first,last);
 //for (int i=0; i<e.size(); i++) std::cout << e[i] << " "; std::cout << std::endl;
 
-/* */
-int h = 4;
-int j = 2;
-int test = get_lcp(&lcp, &h, &j);
-std::cout << test << std::endl;
+/* construction of array M */
+
+for (int i=0; i!=r+1; i++){
+	for (int j=0; j!=r+1; j++){
+		int p = 1;
+		//which suffix does rank i/j represent?
+		std::vector<int>::iterator iter_suffi = std::find(tt.begin(), tt.end(), i);
+		std::vector<int>::iterator iter_suffj = std::find(tt.begin(), tt.end(), j);
+		int suffi = std::distance(tt.begin(),iter_suffi);
+		int suffj = std::distance(tt.begin(),iter_suffj);
+		//where is suffix i/j in the suffix array?
+		sdsl::csa_bitcompressed<>::iterator iter_sai = std::find(sa.begin(), sa.end(), suffi);
+		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
+		int sai = std::distance(sa.begin(),iter_sai);
+		int saj = std::distance(sa.begin(),iter_saj);
+	}
+}
 
 
 
@@ -128,8 +144,18 @@ return 0;
 } //END_MAIN
 
 /******************************* FUNCTION DEFINITIONS */
-int get_lcp(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y)
-{
+int rmq
+/*
+* function: naive range minimum query
+* time complexity: linear
+* space complexity: n/a
+*/
+( //PARAMS
+sdsl::lcp_bitcompressed<> *lcp
+, int *x
+, int *y
+) //END_PARAMS
+{ //FUNCTION
 int i;
 int j;
 if ( (*x) < (*y) ){
@@ -139,15 +165,9 @@ if ( (*x) < (*y) ){
 	i = (*y);
 	j = (*x);
 }
-std::cout << "i = " << i << std::endl;
-std::cout << "j = " << j << std::endl;
 int min = (*lcp)[(i+1)];
-std::cout << "i +1 = " << i+1 << std::endl;
-std::cout << "first pos in lcp to check is " << (*lcp)[3] << std::endl;
-std::cout << "before loop " << min << std::endl;
 for (sdsl::lcp_bitcompressed<>::iterator iter = (*lcp).begin() + i + 2; iter != (*lcp).begin() + j; iter++){
 	if ( (*iter) < min ) min = (*iter);
-	std::cout << "new min" << min << std::endl;
 }
 return min;
-}
+} //END_FUNCTION(rmq)
