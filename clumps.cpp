@@ -1,3 +1,5 @@
+//usage
+// k1457070@nmscde000493:~/clumps$ ./clumps paper.fas -l 6 -m 3 -d 1
 /******************************* HEADERS + INCLUDES */
 #include <iostream>
 /*
@@ -39,9 +41,8 @@ std::cout << "Welcome to CLUMP" << std::endl;
 
 std::string textfile = argv[1];
 int l = atoi(argv[3]);
-//int l = 6;
 int m = atoi(argv[5]);
-//int m = 3;
+int d = atoi(argv[7]);
 std::ifstream tFile(textfile);
 std::string tline;
 std::stringstream tstream;
@@ -115,10 +116,15 @@ for (int i=0; i<tt.size(); i++) std::cout << tt[i] << " "; std::cout << std::end
 std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
 std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
 std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
-std::vector<int> e(first,last);
-//for (int i=0; i<e.size(); i++) std::cout << e[i] << " "; std::cout << std::endl;
+std::vector<int> E(first,last);
+//for (int i=0; i<e.size(); i++) std::cout << E[i] << " "; std::cout << std::endl;
 
 /* construction of array M */
+
+std::list<std::pair<int,int>> M;
+for (int i = 0; i != r; i++) 
+
+
 
 for (int i=0; i!=r+1; i++){
 	for (int j=0; j!=r+1; j++){
@@ -133,6 +139,23 @@ for (int i=0; i!=r+1; i++){
 		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
 		int sai = std::distance(sa.begin(),iter_sai);
 		int saj = std::distance(sa.begin(),iter_saj);
+		//
+		int match = rmq(&lcp, &sai, &saj);
+		int pos = match;
+		int e = 1;
+		while ( (pos < m) && (e <= d) ){
+			p = p * E[pos];
+			suffi = suffi + match + 1;
+			suffj = suffj + match + 1;
+			iter_sai = std::find(sa.begin(), sa.end(), suffi);
+			iter_saj = std::find(sa.begin(), sa.end(), suffj);
+			sai = std::distance(sa.begin(),iter_sai);
+			saj = std::distance(sa.begin(),iter_saj);
+			match = rmq(&lcp, &sai, &saj);
+			pos = match + pos + 1;
+			if (pos < m) e++;
+		} //END_WHILE
+		if (e <= d) ;
 	}
 }
 
