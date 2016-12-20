@@ -139,8 +139,8 @@ for (int i = 0; i != r; i++){
 
 
 
-for (int i=0; i!=r; i++){
-	for (int j=0; j!=r; j++){
+for (int i=0; i!=r+1; i++){
+	for (int j=0; j!=r+1; j++){
 		if (i < j){
 		int p = 1;
 		//which suffix does rank i/j represent?
@@ -153,27 +153,39 @@ for (int i=0; i!=r; i++){
 		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
 		int sai = std::distance(sa.begin(),iter_sai);
 		int saj = std::distance(sa.begin(),iter_saj);
-		std::cout << "rank " << i << " represents suffix " << suffi << std::endl; 
+		std::cout << "\nrank " << i << " represents suffix " << suffi << std::endl; 
 		std::cout << "which is in pos " << sai << " of suffix array" << std::endl;
 		std::cout << "rank " << j << " represents suffix " << suffj << std::endl; 
-		std::cout << "which is in pos " << saj << " of suffix array" << std::endl << std::endl;
+		std::cout << "which is in pos " << saj << " of suffix array" << std::endl;
 		//
 		int match = rmq(&lcp, &sai, &saj);
+		std::cout << "match=rmq=lcp= " << match << std::endl;
 		int pos = match;
+		std::cout << "pos where mismatch " << pos << std::endl;
 		int e = 1;
 		while ( (pos < m) && (e <= d) ){
+			std::cout << "INSIDE WHILE LOOP" << std::endl;
 			p = p * E[pos];
+			std::cout << "prime number = " << p << std::endl;
 			suffi = suffi + match + 1;
 			suffj = suffj + match + 1;
 			iter_sai = std::find(sa.begin(), sa.end(), suffi);
 			iter_saj = std::find(sa.begin(), sa.end(), suffj);
 			sai = std::distance(sa.begin(),iter_sai);
 			saj = std::distance(sa.begin(),iter_saj);
+
+			std::cout << " suffix " << suffi << std::endl; 
+			std::cout << "which is in pos " << sai << " of suffix array" << std::endl;
+			std::cout << " suffix " << suffj << std::endl; 
+			std::cout << "which is in pos " << saj << " of suffix array" << std::endl;
+
 			match = rmq(&lcp, &sai, &saj);
+			std::cout << "match=rmq=lcp= " << match << std::endl;
 			pos = match + pos + 1;
+			std::cout << "pos where mismatch " << pos << std::endl;
 			if (pos < m) e++;
 		} //END_WHILE
-		if (e <= d) std::cout << "hi" << std::endl;
+		if (e <= d) std::cout << "INSERTING IN ARRAY M" << std::endl;
 		} //END_IF(i<j)
 	}
 }
@@ -208,8 +220,10 @@ if ( (*x) < (*y) ){
 	j = (*x);
 }
 int min = (*lcp)[(i+1)];
+if (j != i+1){
 for (sdsl::lcp_bitcompressed<>::iterator iter = (*lcp).begin() + i + 2; iter != (*lcp).begin() + j; iter++){
 	if ( (*iter) < min ) min = (*iter);
+}
 }
 return min;
 } //END_FUNCTION(rmq)
