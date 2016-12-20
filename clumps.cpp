@@ -156,7 +156,7 @@ for (int i=0; i!=r+1; i++){
 		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
 		int sai = std::distance(sa.begin(),iter_sai);
 		int saj = std::distance(sa.begin(),iter_saj);
-		std::cout << "\nrank " << i << " represents suffix " << suffi << std::endl; 
+		std::cout << "\n\nrank " << i << " represents suffix " << suffi << std::endl; 
 		std::cout << "which is in pos " << sai << " of suffix array" << std::endl;
 		std::cout << "rank " << j << " represents suffix " << suffj << std::endl; 
 		std::cout << "which is in pos " << saj << " of suffix array" << std::endl;
@@ -166,7 +166,9 @@ for (int i=0; i!=r+1; i++){
 		int pos = match;
 		std::cout << "pos where mismatch " << pos << std::endl;
 		int e = 1;
-		while ( (pos < m) && (e <= d) ){
+		int boundary = m - (pos+1);
+		std::cout << "boundary = " << boundary << std::endl;
+		while ( (pos < boundary) && (e <= d) ){
 			std::cout << "INSIDE WHILE LOOP" << std::endl;
 			p = p * E[pos];
 			std::cout << "prime number = " << p << std::endl;
@@ -186,14 +188,15 @@ for (int i=0; i!=r+1; i++){
 			std::cout << "match=rmq=lcp= " << match << std::endl;
 			pos = match + pos + 1;
 			std::cout << "pos where mismatch " << pos << std::endl;
-			if (pos < m) e++;
+			boundary = m - (pos+1);
+			std::cout << "boundary = " << boundary << std::endl;
+			if (pos < boundary) e++;
 			//TODO Update p again???
 		} //END_WHILE
 		if (e <= d){
 		std::cout << "INSERTING IN ARRAY M" << std::endl;
-		std::pair <int,int> pair = std::make_pair(j,p);
-		std::vector<std::pair<int,int>> Mi = M[i];
-		Mi.push_back(pair);
+		std::pair <int,int> jp = std::make_pair(j,p);
+		M[i].push_back(jp);
 		}
 		} //END_IF(i<j)
 	}
@@ -212,7 +215,7 @@ for (std::vector<std::vector<std::pair<int,int>>>::iterator it = M.begin(); it !
 for (int i = 0; i != r; i++){
 	if (M[i].size() != 0){
 		for (int x = 0; x != M[i].size(); x++){
-			std::cout << "i = " << i << "---" << " j = " << M[i][x].first << "---" << " p = " << M[i][x].second << std::endl;
+			std::cout << "i = " << i << " ---" << " j = " << M[i][x].first << " ---" << " p = " << M[i][x].second << std::endl;
 		}
 	}
 }
