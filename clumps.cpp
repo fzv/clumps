@@ -128,13 +128,16 @@ std::cout << "printing array E" << std::endl;
 for (int i=0; i<E.size(); i++) std::cout << E[i] << " "; std::cout << std::endl;
 
 /* construction of array M */
-/*
-std::list<std::list<std::pair<int,int>>> M;
+
+std::vector<std::vector<std::pair<int,int>>> M;
 for (int i = 0; i != r; i++){
-	std::list<std::pair<int,int>> list;
-	M.push_back(list);
+	std::vector<std::pair<int,int>> vec;
+	M.push_back(vec);
 }
-*/
+
+
+
+
 
 
 
@@ -174,9 +177,9 @@ for (int i=0; i!=r+1; i++){
 			sai = std::distance(sa.begin(),iter_sai);
 			saj = std::distance(sa.begin(),iter_saj);
 
-			std::cout << " suffix " << suffi << std::endl; 
+			std::cout << "suffix " << suffi << std::endl; 
 			std::cout << "which is in pos " << sai << " of suffix array" << std::endl;
-			std::cout << " suffix " << suffj << std::endl; 
+			std::cout << "suffix " << suffj << std::endl; 
 			std::cout << "which is in pos " << saj << " of suffix array" << std::endl;
 
 			match = rmq(&lcp, &sai, &saj);
@@ -184,9 +187,33 @@ for (int i=0; i!=r+1; i++){
 			pos = match + pos + 1;
 			std::cout << "pos where mismatch " << pos << std::endl;
 			if (pos < m) e++;
+			//TODO Update p again???
 		} //END_WHILE
-		if (e <= d) std::cout << "INSERTING IN ARRAY M" << std::endl;
+		if (e <= d){
+		std::cout << "INSERTING IN ARRAY M" << std::endl;
+		std::pair <int,int> pair = std::make_pair(j,p);
+		std::vector<std::pair<int,int>> Mi = M[i];
+		Mi.push_back(pair);
+		}
 		} //END_IF(i<j)
+	}
+}
+
+//print M
+/*
+for (std::vector<std::vector<std::pair<int,int>>>::iterator it = M.begin(); it != M.end(); it++){
+	if ( (*it).size() != 0 ){
+	for (std::vector<std::pair<int,int>>::iterator ti = (*it).begin(); ti != (*it).end(); ti++){
+		
+	}
+	}
+}
+*/
+for (int i = 0; i != r; i++){
+	if (M[i].size() != 0){
+		for (int x = 0; x != M[i].size(); x++){
+			std::cout << "i = " << i << "---" << " j = " << M[i][x].first << "---" << " p = " << M[i][x].second << std::endl;
+		}
 	}
 }
 
