@@ -43,6 +43,7 @@ std::string textfile = argv[1];
 int l = atoi(argv[3]);
 int m = atoi(argv[5]);
 int d = atoi(argv[7]);
+//TODO: if d == 0 ????
 std::ifstream tFile(textfile);
 std::string tline;
 std::stringstream tstream;
@@ -58,18 +59,22 @@ if (tFile.is_open()){
 }
 std::string t = tstream.str();
 int n = t.length();
+std::cout << "printing text" << std::endl;
 std::cout << t << std::endl;
+std::cout << "n = " << n << std::endl;
 
 /* construct suffix array of t */
 
 sdsl::csa_bitcompressed<> sa;
 construct_im(sa, t, 1);
+std::cout << "printing suffix array" << std::endl;
 for (sdsl::csa_bitcompressed<>::iterator iter = sa.begin(); iter != sa.end(); iter++) std::cout << (*iter) << " "; std::cout << std::endl;
 
 /* constuct longest common prefix array of t */
 
 sdsl::lcp_bitcompressed<> lcp;
 construct_im(lcp, t, 1);
+std::cout << "printing lcp array" << std::endl;
 for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); iter++) std::cout << (*iter) << " "; std::cout << std::endl;
 
 /* construct t' */
@@ -110,24 +115,33 @@ for (int i=1; i<n+1; i++){
 		}
 	}
 }
+std::cout << "printing T'" << std::endl;
 for (int i=0; i<tt.size(); i++) std::cout << tt[i] << " "; std::cout << std::endl;
+std::cout << "highest rank is " << r << std::endl;
 
 /* construct array E */
 std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
 std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
 std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
-//for (int i=0; i<e.size(); i++) std::cout << E[i] << " "; std::cout << std::endl;
+std::cout << "printing array E" << std::endl;
+for (int i=0; i<E.size(); i++) std::cout << E[i] << " "; std::cout << std::endl;
 
 /* construction of array M */
+/*
+std::list<std::list<std::pair<int,int>>> M;
+for (int i = 0; i != r; i++){
+	std::list<std::pair<int,int>> list;
+	M.push_back(list);
+}
+*/
 
-std::list<std::pair<int,int>> M;
-for (int i = 0; i != r; i++) 
 
 
 
-for (int i=0; i!=r+1; i++){
-	for (int j=0; j!=r+1; j++){
+for (int i=0; i!=r; i++){
+	for (int j=0; j!=r; j++){
+		if (i < j){
 		int p = 1;
 		//which suffix does rank i/j represent?
 		std::vector<int>::iterator iter_suffi = std::find(tt.begin(), tt.end(), i);
@@ -139,6 +153,10 @@ for (int i=0; i!=r+1; i++){
 		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
 		int sai = std::distance(sa.begin(),iter_sai);
 		int saj = std::distance(sa.begin(),iter_saj);
+		std::cout << "rank " << i << " represents suffix " << suffi << std::endl; 
+		std::cout << "which is in pos " << sai << " of suffix array" << std::endl;
+		std::cout << "rank " << j << " represents suffix " << suffj << std::endl; 
+		std::cout << "which is in pos " << saj << " of suffix array" << std::endl << std::endl;
 		//
 		int match = rmq(&lcp, &sai, &saj);
 		int pos = match;
@@ -155,7 +173,8 @@ for (int i=0; i!=r+1; i++){
 			pos = match + pos + 1;
 			if (pos < m) e++;
 		} //END_WHILE
-		if (e <= d) ;
+		if (e <= d) std::cout << "hi" << std::endl;
+		} //END_IF(i<j)
 	}
 }
 
