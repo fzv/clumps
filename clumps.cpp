@@ -166,12 +166,13 @@ for (int i=0; i!=r+1; i++){
 		int pos = match;
 		std::cout << "pos where mismatch " << pos << std::endl;
 		int e = 1;
-		int boundary = m - (pos+1);
-		std::cout << "boundary = " << boundary << std::endl;
-		while ( (pos < boundary) && (e <= d) ){
+		std::cout << "e = " << e << std::endl;
+		//int boundary = m - (pos+1);
+		p = p * E[pos];
+		std::cout << "prime number = " << p << std::endl;
+		//std::cout << "boundary = " << boundary << std::endl;
+		while ( (pos < m) && (e <= d) ){
 			std::cout << "INSIDE WHILE LOOP" << std::endl;
-			p = p * E[pos];
-			std::cout << "prime number = " << p << std::endl;
 			suffi = suffi + match + 1;
 			suffj = suffj + match + 1;
 			iter_sai = std::find(sa.begin(), sa.end(), suffi);
@@ -188,15 +189,25 @@ for (int i=0; i!=r+1; i++){
 			std::cout << "match=rmq=lcp= " << match << std::endl;
 			pos = match + pos + 1;
 			std::cout << "pos where mismatch " << pos << std::endl;
-			boundary = m - (pos+1);
-			std::cout << "boundary = " << boundary << std::endl;
-			if (pos < boundary) e++;
-			//TODO Update p again???
+			//boundary = m - (pos+1);
+			//std::cout << "boundary = " << boundary << std::endl;
+			if (pos < m){
+				e++;
+				std::cout << "e = " << e << std::endl;
+				p = p * E[pos];
+				std::cout << "prime number = " << p << std::endl;
+			}
 		} //END_WHILE
 		if (e <= d){
-		std::cout << "INSERTING IN ARRAY M" << std::endl;
-		std::pair <int,int> jp = std::make_pair(j,p);
-		M[i].push_back(jp);
+			std::cout << "INSERTING IN ARRAY M the following" << std::endl;
+			std::cout << "p = " << p << std::endl;
+			std::pair <int,int> jp = std::make_pair(j,p);
+			M[i].push_back(jp);
+		} else {
+			p = -1;
+			std::cout << "p = " << p << std::endl;
+			std::pair <int,int> jp = std::make_pair(j,p);
+			M[i].push_back(jp);
 		}
 		} //END_IF(i<j)
 	}
@@ -240,6 +251,7 @@ sdsl::lcp_bitcompressed<> *lcp
 , int *y
 ) //END_PARAMS
 { //FUNCTION
+std::cout << "INSIDE LCP FUNCTION" << std::endl;
 int i;
 int j;
 if ( (*x) < (*y) ){
@@ -250,10 +262,15 @@ if ( (*x) < (*y) ){
 	j = (*x);
 }
 int min = (*lcp)[(i+1)];
-if (j != i+1){
-for (sdsl::lcp_bitcompressed<>::iterator iter = (*lcp).begin() + i + 2; iter != (*lcp).begin() + j; iter++){
-	if ( (*iter) < min ) min = (*iter);
-}
-}
+std::cout << "first value in range is " << min << std::endl;
+std::cout << "i+1 = " << (i+1) << std::endl;
+std::cout << "j = " << j << std::endl;
+if ( j != (i+1) ){
+	std::cout << "j != i+1" << std::endl;
+	for (sdsl::lcp_bitcompressed<>::iterator iter = (*lcp).begin() + i + 1; iter <= (*lcp).begin() + j; iter++){
+		std::cout << "next value in range is " << (*iter) << std::endl;
+		if ( (*iter) < min ) min = (*iter);
+	} //END_FOR
+} //END_IF
 return min;
 } //END_FUNCTION(rmq)
