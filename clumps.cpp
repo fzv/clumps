@@ -257,14 +257,17 @@ for (int i = 0; i < n-m+1; i++){
 				if ( ( ( (std::distance( M.begin() , a ))==tt[i] ) || ( (*b).first == tt[i] ) ) && ( (*b).second != -1 ) )
 				{
 					//find index of b.second in unqiue (+ tf in sum) = ind
+					int ind = std::find( unique.begin() , unique.end() , ((*b).second) );
 					//find the val of b.first in parikh = val
-					//sum[ind] += val
-				{
-			}
-		}
-				
-			}
-		}
+					int val = parikh[(*b).first];
+					sum[ind] += val;
+				}
+			} //END_FOR
+		} //END_FOR
+		std::cout << "printing sum vector" << std::endl;
+		for (int i=0; i<sum.size(); i++) std::cout << sum[i] << std::endl;
+	} //END_IF
+} //END_FOR
 //TODO get rid of -1's in M
 
 
