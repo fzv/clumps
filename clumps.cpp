@@ -29,6 +29,7 @@
 
 /******************************* FUNCTION DECLARATIONS */
 int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y);
+std::vector<int> pvalues(std::vector<std::vector<std::pair<int,int>>> *M, int *i);
 
 /******************************* MAIN FUNCTION */
 
@@ -43,6 +44,7 @@ std::string textfile = argv[1];
 int l = atoi(argv[3]);
 int m = atoi(argv[5]);
 int d = atoi(argv[7]);
+int k = atoi(argv[9]);
 //TODO: if d == 0 ????
 std::ifstream tFile(textfile);
 std::string tline;
@@ -128,20 +130,11 @@ std::cout << "printing array E" << std::endl;
 for (int i=0; i<E.size(); i++) std::cout << E[i] << " "; std::cout << std::endl;
 
 /* construction of array M */
-
 std::vector<std::vector<std::pair<int,int>>> M;
 for (int i = 0; i != r; i++){
 	std::vector<std::pair<int,int>> vec;
 	M.push_back(vec);
 }
-
-
-
-
-
-
-
-
 for (int i=0; i!=r+1; i++){
 	for (int j=0; j!=r+1; j++){
 		if (i < j){
@@ -213,16 +206,10 @@ for (int i=0; i!=r+1; i++){
 	}
 }
 
-//print M
-/*
-for (std::vector<std::vector<std::pair<int,int>>>::iterator it = M.begin(); it != M.end(); it++){
-	if ( (*it).size() != 0 ){
-	for (std::vector<std::pair<int,int>>::iterator ti = (*it).begin(); ti != (*it).end(); ti++){
-		
-	}
-	}
-}
-*/
+/* sort M */
+
+
+/* print M */
 for (int i = 0; i != r; i++){
 	if (M[i].size() != 0){
 		for (int x = 0; x != M[i].size(); x++){
@@ -230,6 +217,58 @@ for (int i = 0; i != r; i++){
 		}
 	}
 }
+
+/* create string X */
+std::cout << "l = " << l << std::endl; 
+int ll = l-m+1;
+std::cout << "l' = " << ll << std::endl; 
+std::vector<int> x(ll, -1);
+x.insert( x.end() , tt.begin() , tt.end() );
+std::cout << "printing string X" << std::endl;
+for (int i=0; i<x.size(); i++) std::cout << x[i] << " "; std::cout << std::endl;
+
+/* initialise parkih vector */
+std::vector<int> parikh(r+1, 0);
+std::cout << "printing parikh vector" << std::endl;
+for (int i=0; i<parikh.size(); i++) std::cout << parikh[i] << std::endl;
+
+/* read X */
+for (int i = 0; i < n-m+1; i++){
+	std::cout << "step " << i << std::endl;
+	if ( tt[i] != -1) parikh[tt[i]]++; 
+	if ( ( (i-ll) >= 0 ) && ( tt[i-ll] != -1 ) ) parikh[tt[i-ll]]--;
+	std::cout << "printing parikh vector" << std::endl;
+	for (int i=0; i<parikh.size(); i++) std::cout << parikh[i] << std::endl;
+	if ( parikh[tt[i]] >= k ){
+		std::cout << "reporting solid clump!!!" << std::endl;
+	} else {
+		std::cout << "attempting to merge" << std::endl;
+		std::vector<int> unique;
+		unique = pvalues(&M, &tt[i]);
+		std::cout << "printing unique vector outside function" << std::endl;
+		for (int i=0; i<unique.size(); i++) std::cout << unique[i] << std::endl;
+		std::vector<int> sum;
+		for (int i=0; i<unique.size(); i++) sum.push_back(0);
+		//IF SUM[I] PLUS P(TT[I]) > K then report
+		for (std::vector<std::vector<std::pair<int,int>>>::iterator a = M.begin(); a != M.end(); a++)
+		{
+			for (std::vector<std::pair<int,int>>::iterator b = (*a).begin(); b != (*a).end(); b++)
+			{
+				if ( ( ( (std::distance( M.begin() , a ))==tt[i] ) || ( (*b).first == tt[i] ) ) && ( (*b).second != -1 ) )
+				{
+					//find index of b.second in unqiue (+ tf in sum) = ind
+					//find the val of b.first in parikh = val
+					//sum[ind] += val
+				{
+			}
+		}
+				
+			}
+		}
+//TODO get rid of -1's in M
+
+
+
 
 
 
@@ -241,7 +280,7 @@ return 0;
 /******************************* FUNCTION DEFINITIONS */
 int rmq
 /*
-* function: naive range minimum query
+* function: naive range minimum query TODO implemtnt non naive
 * time complexity: linear
 * space complexity: n/a
 */
@@ -274,3 +313,37 @@ if ( j != (i+1) ){
 } //END_IF
 return min;
 } //END_FUNCTION(rmq)
+
+std::vector<int> pvalues
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+( //PARAMS
+  std::vector<std::vector<std::pair<int,int>>> * M
+, int * i
+) //END_PARAMS
+{ //FUCNTION
+std::cout << "INSIDE PVALUES FUNCTION" << std::endl;
+std::cout << "i = " << (*i) << std::endl;
+std::vector<int> unique;
+
+for (std::vector<std::vector<std::pair<int,int>>>::iterator a = (*M).begin(); a != (*M).end(); a++)
+{
+	for (std::vector<std::pair<int,int>>::iterator b = (*a).begin(); b != (*a).end(); b++)
+	{
+		if ( ( ( (std::distance( (*M).begin() , a ))==(*i) ) || ( (*b).first == (*i) ) ) && ( (*b).second != -1 ) ) unique.push_back( (*b).second );
+	}
+}
+
+/*
+unique.push_back((*Mi)[0].second);
+for (std::vector<std::pair<int,int>>::iterator iter = (*Mi).begin() + 1; iter != (*Mi).end(); iter++){
+	if ( (*iter).second != (*(iter-1)).second ) unique.push_back((*iter).second);
+}
+*/
+std::cout << "printing unique vector iside function" << std::endl;
+for (int i=0; i<unique.size(); i++) std::cout << unique[i] << std::endl;
+return unique;
+} //END_FUNCTION{pvalues}
