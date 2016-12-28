@@ -1,5 +1,7 @@
 //usage
 // k1457070@nmscde000493:~/clumps$ ./clumps paper.fas -l 6 -m 3 -d 1
+//k1457070@nmscde000493:~/clumps$ ./clumps paper.fas -l 7 -m 3 -d 1 -k 2
+
 /******************************* HEADERS + INCLUDES */
 #include <iostream>
 /*
@@ -128,10 +130,16 @@ std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
 std::cout << "printing array E" << std::endl;
 for (int i=0; i<E.size(); i++) std::cout << E[i] << " "; std::cout << std::endl;
+std::vector<bool> isPrime( E.back() , false);
+for (std::vector<int>::iterator i = E.begin(); i != E.end(); i++) isPrime[(*i)] = true;
+std::cout << "printing array isPrime" << std::endl;
+for (int i=0; i<isPrime.size(); i++) std::cout << isPrime[i] << " "; std::cout << std::endl;
+
 
 /* construction of array M */
 std::vector<std::vector<std::pair<int,int>>> M;
-for (int i = 0; i != r; i++){
+for (int i = 0; i != r; i++)
+{
 	std::vector<std::pair<int,int>> vec;
 	M.push_back(vec);
 }
@@ -248,7 +256,7 @@ for (int i = 0; i < n-m+1; i++){
 		std::cout << "printing unique vector outside function" << std::endl;
 		for (int i=0; i<unique.size(); i++) std::cout << unique[i] << std::endl;
 		std::vector<int> sum;
-		for (int i=0; i<unique.size(); i++) sum.push_back(0);
+		for (int i=0; i<unique.size(); i++) sum.push_back( parikh[tt[i]] );
 		//IF SUM[I] PLUS P(TT[I]) > K then report
 		for (std::vector<std::vector<std::pair<int,int>>>::iterator a = M.begin(); a != M.end(); a++)
 		{
@@ -256,8 +264,9 @@ for (int i = 0; i < n-m+1; i++){
 			{
 				if ( ( ( (std::distance( M.begin() , a ))==tt[i] ) || ( (*b).first == tt[i] ) ) && ( (*b).second != -1 ) )
 				{
-					//find index of b.second in unqiue (+ tf in sum) = ind
-					int ind = std::find( unique.begin() , unique.end() , ((*b).second) );
+					//find index of b.second in unqiue (+ therefore in sum) = ind
+					std::vector<int>::iterator iter = std::find( unique.begin() , unique.end() , ((*b).second) );
+					int ind = std::distance( unique.begin() , iter );
 					//find the val of b.first in parikh = val
 					int val = parikh[(*b).first];
 					sum[ind] += val;
@@ -266,6 +275,17 @@ for (int i = 0; i < n-m+1; i++){
 		} //END_FOR
 		std::cout << "printing sum vector" << std::endl;
 		for (int i=0; i<sum.size(); i++) std::cout << sum[i] << std::endl;
+		for (int i = 0; i < unique.size(); i++)
+		{
+			if (isPrime[i] && sum[i] >= k)
+			{
+				std::cout << "reporting degenrate clump!!!" << std::endl;
+			}
+			else
+			{
+				std::cout << "todo" << std::endl;
+			}
+		}
 	} //END_IF
 } //END_FOR
 //TODO get rid of -1's in M
