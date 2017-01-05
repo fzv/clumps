@@ -52,6 +52,8 @@ std::string textfile = argv[1];
 int l = atoi(argv[3]);
 int m = atoi(argv[5]);
 int ll = l-m+1;
+logfile << "l'= " << ll << std::endl;
+logfile << "l/2= " << ceil(ll/2) << std::endl;
 int d = atoi(argv[7]);
 int k = atoi(argv[9]);
 //TODO: if d == 0 ????
@@ -137,22 +139,20 @@ std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
 logfile << "printing array E" << std::endl;
 for (int i=0; i<E.size(); i++) logfile << E[i] << " "; logfile << std::endl;
-std::vector<bool> isPrime( E.back() , false);
-for (std::vector<int>::iterator i = E.begin(); i != E.end(); i++) isPrime[(*i)] = true;
-logfile << "printing array isPrime" << std::endl;
-for (int i=0; i<isPrime.size(); i++) logfile << isPrime[i] << " "; logfile << std::endl;
+
 
 
 /* construction of array M */
-std::vector<std::vector<std::pair<int,int>>> M;
+std::vector<std::vector<std::pair<int,std::pair<int,int>>>> M;
 for (int i = 0; i != r; i++)
 {
-	std::vector<std::pair<int,int>> vec;
+	std::vector<std::pair<int,std::pair<int,int>>> vec;
 	M.push_back(vec);
 }
+
 for (int i=0; i!=r+1; i++){
 	for (int j=0; j!=r+1; j++){
-		if (i < j){
+		//if (i < j){
 		int p = 1;
 		//which suffix does rank i/j represent?
 		std::vector<int>::iterator iter_suffi = std::find(tt.begin(), tt.end(), i);
@@ -164,20 +164,20 @@ for (int i=0; i!=r+1; i++){
 		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
 		int sai = std::distance(sa.begin(),iter_sai);
 		int saj = std::distance(sa.begin(),iter_saj);
-		logfile << "\n\nrank " << i << " represents suffix " << suffi << std::endl; 
-		logfile << "which is in pos " << sai << " of suffix array" << std::endl;
-		logfile << "rank " << j << " represents suffix " << suffj << std::endl; 
-		logfile << "which is in pos " << saj << " of suffix array" << std::endl;
+		logfile << "\n\nRANK " << i << " represents suffix " << suffi << std::endl; 
+		/////logfile << "which is in pos " << sai << " of suffix array" << std::endl;
+		logfile << "RANK " << j << " represents suffix " << suffj << std::endl; 
+		/////logfile << "which is in pos " << saj << " of suffix array" << std::endl;
 		//
 		int match = rmq(&lcp, &sai, &saj, &logfile);
 		logfile << "match=rmq=lcp= " << match << std::endl;
 		int pos = match;
 		logfile << "pos where mismatch " << pos << std::endl;
 		int e = 1;
-		logfile << "e = " << e << std::endl;
+		/////logfile << "e = " << e << std::endl;
 		//int boundary = m - (pos+1);
 		p = p * E[pos];
-		logfile << "prime number = " << p << std::endl;
+		/////logfile << "prime number = " << p << std::endl;
 		//logfile << "boundary = " << boundary << std::endl;
 		while ( (pos < m) && (e <= d) ){
 			logfile << "INSIDE WHILE LOOP" << std::endl;
@@ -189,9 +189,9 @@ for (int i=0; i!=r+1; i++){
 			saj = std::distance(sa.begin(),iter_saj);
 
 			logfile << "suffix " << suffi << std::endl; 
-			logfile << "which is in pos " << sai << " of suffix array" << std::endl;
+			/////logfile << "which is in pos " << sai << " of suffix array" << std::endl;
 			logfile << "suffix " << suffj << std::endl; 
-			logfile << "which is in pos " << saj << " of suffix array" << std::endl;
+			/////logfile << "which is in pos " << saj << " of suffix array" << std::endl;
 
 			match = rmq(&lcp, &sai, &saj, &logfile);
 			logfile << "match=rmq=lcp= " << match << std::endl;
@@ -201,38 +201,47 @@ for (int i=0; i!=r+1; i++){
 			//logfile << "boundary = " << boundary << std::endl;
 			if (pos < m){
 				e++;
-				logfile << "e = " << e << std::endl;
+				/////logfile << "e = " << e << std::endl;
 				p = p * E[pos];
-				logfile << "prime number = " << p << std::endl;
+				/////logfile << "prime number = " << p << std::endl;
 			}
 		} //END_WHILE
 		if (e <= d){
 			logfile << "INSERTING IN ARRAY M the following" << std::endl;
 			logfile << "p = " << p << std::endl;
-			std::pair <int,int> jp = std::make_pair(j,p);
-			M[i].push_back(jp);
+			logfile << "e = " << e << std::endl;
+			std::pair<int,int> pe = std::make_pair(p,e);
+			std::pair<int,std::pair<int,int>> jpe = std::make_pair(j,pe);
+			M[i].push_back(jpe);
 		} else {
+			logfile << "INSERTING IN ARRAY M the following" << std::endl;
 			p = -1;
+			e = -1;
 			logfile << "p = " << p << std::endl;
-			std::pair <int,int> jp = std::make_pair(j,p);
-			M[i].push_back(jp);
+			logfile << "e = " << e << std::endl;
+			std::pair<int,int> pe = std::make_pair(p,e);
+			std::pair<int,std::pair<int,int>> jpe = std::make_pair(j,pe);
+			M[i].push_back(jpe);
 		}
-		} //END_IF(i<j)
+		//} //END_IF(i<j)
 	}
 }
-
+logfile << "finished constructing M" << std::endl;
 /* sort M */
+
+/* make copy of M with pointers to factors */
 
 
 /* print M */
+/*
 for (int i = 0; i != r; i++){
 	if (M[i].size() != 0){
 		for (int x = 0; x != M[i].size(); x++){
-			logfile << "i = " << i << " ---" << " j = " << M[i][x].first << " ---" << " p = " << M[i][x].second << std::endl;
+			logfile << "i = " << i << " ---" << " j = " << M[i][x].first << " ---" << " p = " << M[i][x].second.first << std::endl;
 		}
 	}
 }
-
+*/
 /* create string X */
 logfile << "l = " << l << std::endl; 
 logfile << "l' = " << ll << std::endl; 
@@ -247,6 +256,7 @@ logfile << "printing parikh vector" << std::endl;
 for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 
 /* read X */
+/*
 for (int i = 0; i < n-m+1; i++){
 	logfile << "step " << i << std::endl;
 	if ( tt[i] != -1) parikh[tt[i]]++; 
@@ -261,10 +271,10 @@ for (int i = 0; i < n-m+1; i++){
 		unique = pvalues(&M, &tt[i], &logfile);
 		logfile << "printing unique vector outside function" << std::endl;
 		for (int i=0; i<unique.size(); i++) logfile << unique[i] << std::endl;
-		/* initialise sum vector with parikh vector values */
+		// initialise sum vector with parikh vector values 
 		std::vector<int> sum;
 		for (int i=0; i<unique.size(); i++) sum.push_back( parikh[tt[i]] );
-		/*  */
+		//  
 		for (std::vector<std::vector<std::pair<int,int>>>::iterator a = M.begin(); a != M.end(); a++)
 		{
 			for (std::vector<std::pair<int,int>>::iterator b = (*a).begin(); b != (*a).end(); b++)
@@ -296,7 +306,7 @@ for (int i = 0; i < n-m+1; i++){
 	} //END_IF
 } //END_FOR
 //TODO get rid of -1's in M
-
+*/
 
 
 logfile.close();
@@ -321,7 +331,7 @@ sdsl::lcp_bitcompressed<> *lcp
 , std::ofstream *logfile
 ) //END_PARAMS
 { //FUNCTION
-(*logfile) << "INSIDE LCP FUNCTION" << std::endl;
+/////(*logfile) << "INSIDE LCP FUNCTION" << std::endl;
 int i;
 int j;
 if ( (*x) < (*y) ){
@@ -332,13 +342,13 @@ if ( (*x) < (*y) ){
 	j = (*x);
 }
 int min = (*lcp)[(i+1)];
-(*logfile) << "first value in range is " << min << std::endl;
-(*logfile) << "i+1 = " << (i+1) << std::endl;
-(*logfile) << "j = " << j << std::endl;
+/////(*logfile) << "first value in range is " << min << std::endl;
+/////(*logfile) << "i+1 = " << (i+1) << std::endl;
+/////(*logfile) << "j = " << j << std::endl;
 if ( j != (i+1) ){
-	(*logfile) << "j != i+1" << std::endl;
+	/////(*logfile) << "j != i+1" << std::endl;
 	for (sdsl::lcp_bitcompressed<>::iterator iter = (*lcp).begin() + i + 1; iter <= (*lcp).begin() + j; iter++){
-		(*logfile) << "next value in range is " << (*iter) << std::endl;
+		/////(*logfile) << "next value in range is " << (*iter) << std::endl;
 		if ( (*iter) < min ) min = (*iter);
 	} //END_FOR
 } //END_IF
@@ -357,8 +367,8 @@ std::vector<int> pvalues
 , std::ofstream *logfile
 ) //END_PARAMS
 { //FUCNTION
-(*logfile) << "INSIDE PVALUES FUNCTION" << std::endl;
-(*logfile) << "i = " << (*i) << std::endl;
+/////(*logfile) << "INSIDE PVALUES FUNCTION" << std::endl;
+/////(*logfile) << "i = " << (*i) << std::endl;
 std::vector<int> unique;
 
 for (std::vector<std::vector<std::pair<int,int>>>::iterator a = (*M).begin(); a != (*M).end(); a++)
@@ -375,7 +385,7 @@ for (std::vector<std::pair<int,int>>::iterator iter = (*Mi).begin() + 1; iter !=
 	if ( (*iter).second != (*(iter-1)).second ) unique.push_back((*iter).second);
 }
 */
-(*logfile) << "printing unique vector iside function" << std::endl;
-for (int i=0; i<unique.size(); i++) (*logfile) << unique[i] << std::endl;
+/////(*logfile) << "printing unique vector iside function" << std::endl;
+/////for (int i=0; i<unique.size(); i++) (*logfile) << unique[i] << std::endl;
 return unique;
 } //END_FUNCTION{pvalues}
