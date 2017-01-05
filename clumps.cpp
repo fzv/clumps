@@ -72,22 +72,22 @@ if (tFile.is_open()){
 }
 std::string t = tstream.str();
 int n = t.length();
-logfile << "printing text" << std::endl;
+logfile << std::endl << "printing text" << std::endl;
 logfile << t << std::endl;
-logfile << "n = " << n << std::endl;
+logfile << std::endl << "n = " << n << std::endl;
 
 /* construct suffix array of t */
 
 sdsl::csa_bitcompressed<> sa;
 construct_im(sa, t, 1);
-logfile << "printing suffix array" << std::endl;
+logfile << std::endl << "printing suffix array" << std::endl;
 for (sdsl::csa_bitcompressed<>::iterator iter = sa.begin(); iter != sa.end(); iter++) logfile << (*iter) << " "; logfile << std::endl;
 
 /* constuct longest common prefix array of t */
 
 sdsl::lcp_bitcompressed<> lcp;
 construct_im(lcp, t, 1);
-logfile << "printing lcp array" << std::endl;
+logfile << std::endl << "printing lcp array" << std::endl;
 for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); iter++) logfile << (*iter) << " "; logfile << std::endl;
 
 /* construct t' */
@@ -111,9 +111,9 @@ do{
 		i++; //skip this suffix
 	}
 } while (i != n+1); //loop through text
-logfile << "printing T'" << std::endl;
+logfile << std::endl << "printing T'" << std::endl;
 for (int i=0; i<tt.size(); i++) logfile << tt[i] << " "; logfile << std::endl;
-logfile << "highest rank is " << r << std::endl;
+logfile << std::endl << "highest rank is " << r << std::endl;
 
 /**********************************************************************************************
 std::vector<int> tt(n-m+1, -1);
@@ -137,7 +137,7 @@ std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}; // TODO c
 std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
 std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
-logfile << "printing array E" << std::endl;
+logfile << std::endl << "printing array E" << std::endl;
 for (int i=0; i<E.size(); i++) logfile << E[i] << " "; logfile << std::endl;
 
 
@@ -150,9 +150,9 @@ for (int i = 0; i != r; i++)
 	M.push_back(vec);
 }
 
-for (int i=0; i!=r+1; i++){
-	for (int j=0; j!=r+1; j++){
-		//if (i < j){
+for (int i = 0; i < r+1; i++){
+	for (int j = 0; j < r+1; j++){
+		if (i != j){
 		int p = 1;
 		//which suffix does rank i/j represent?
 		std::vector<int>::iterator iter_suffi = std::find(tt.begin(), tt.end(), i);
@@ -170,9 +170,9 @@ for (int i=0; i!=r+1; i++){
 		/////logfile << "which is in pos " << saj << " of suffix array" << std::endl;
 		//
 		int match = rmq(&lcp, &sai, &saj, &logfile);
-		logfile << "match=rmq=lcp= " << match << std::endl;
+		/////logfile << "match=rmq=lcp= " << match << std::endl;
 		int pos = match;
-		logfile << "pos where mismatch " << pos << std::endl;
+		/////logfile << "pos where mismatch " << pos << std::endl;
 		int e = 1;
 		/////logfile << "e = " << e << std::endl;
 		//int boundary = m - (pos+1);
@@ -180,7 +180,7 @@ for (int i=0; i!=r+1; i++){
 		/////logfile << "prime number = " << p << std::endl;
 		//logfile << "boundary = " << boundary << std::endl;
 		while ( (pos < m) && (e <= d) ){
-			logfile << "INSIDE WHILE LOOP" << std::endl;
+			/////logfile << "INSIDE WHILE LOOP" << std::endl;
 			suffi = suffi + match + 1;
 			suffj = suffj + match + 1;
 			iter_sai = std::find(sa.begin(), sa.end(), suffi);
@@ -188,15 +188,15 @@ for (int i=0; i!=r+1; i++){
 			sai = std::distance(sa.begin(),iter_sai);
 			saj = std::distance(sa.begin(),iter_saj);
 
-			logfile << "suffix " << suffi << std::endl; 
+			/////logfile << "suffix " << suffi << std::endl; 
 			/////logfile << "which is in pos " << sai << " of suffix array" << std::endl;
-			logfile << "suffix " << suffj << std::endl; 
+			/////logfile << "suffix " << suffj << std::endl; 
 			/////logfile << "which is in pos " << saj << " of suffix array" << std::endl;
 
 			match = rmq(&lcp, &sai, &saj, &logfile);
-			logfile << "match=rmq=lcp= " << match << std::endl;
+			/////logfile << "match=rmq=lcp= " << match << std::endl;
 			pos = match + pos + 1;
-			logfile << "pos where mismatch " << pos << std::endl;
+			/////logfile << "pos where mismatch " << pos << std::endl;
 			//boundary = m - (pos+1);
 			//logfile << "boundary = " << boundary << std::endl;
 			if (pos < m){
@@ -223,7 +223,7 @@ for (int i=0; i!=r+1; i++){
 			std::pair<int,std::pair<int,int>> jpe = std::make_pair(j,pe);
 			M[i].push_back(jpe);
 		}
-		//} //END_IF(i<j)
+		} //END_IF(i != j)
 	}
 }
 logfile << "finished constructing M" << std::endl;
