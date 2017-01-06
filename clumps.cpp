@@ -32,6 +32,7 @@
 /******************************* FUNCTION DECLARATIONS */
 int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
 std::vector<int> pvalues(std::vector<std::vector<std::pair<int,int>>> *M, int *i, std::ofstream *logfile);
+bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
 
 /******************************* MAIN FUNCTION */
 
@@ -90,7 +91,7 @@ construct_im(lcp, t, 1);
 logfile << std::endl << "printing lcp array" << std::endl;
 for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); iter++) logfile << (*iter) << " "; logfile << std::endl;
 
-/* construct t' */
+/* construct t' without  frequently occuring patterns of length m */
 std::vector<int> tt( (n-m+1) , -1);
 int r = -1;
 int i = 0;
@@ -132,8 +133,10 @@ logfile << "printing T'" << std::endl;
 for (int i=0; i<tt.size(); i++) logfile << tt[i] << " "; logfile << std::endl;
 logfile << "highest rank is " << r << std::endl;
 *******************************************************************************************/
+
+
 /* construct array E */
-std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}; // TODO const int???
+std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}; // TODO const int??? // TODO add more numbers 
 std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
 std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
@@ -144,30 +147,31 @@ for (int i=0; i<E.size(); i++) logfile << E[i] << " "; logfile << std::endl;
 
 /* construction of array M */
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> M;
-for (int i = 0; i != r; i++)
+for (int i = 0; i <= r; i++)
 {
 	std::vector<std::pair<int,std::pair<int,int>>> vec;
 	M.push_back(vec);
 }
 
-for (int i = 0; i < r+1; i++){
-	for (int j = 0; j < r+1; j++){
+for (int i = 0; i <= r; i++){
+	for (int j = 0; j <= r; j++){
+		/////logfile << "\n\ni = " << i << "    " << "j = " << j << std::endl;
 		if (i != j){
 		int p = 1;
 		//which suffix does rank i/j represent?
 		std::vector<int>::iterator iter_suffi = std::find(tt.begin(), tt.end(), i);
 		std::vector<int>::iterator iter_suffj = std::find(tt.begin(), tt.end(), j);
 		int suffi = std::distance(tt.begin(),iter_suffi);
+		/////logfile << "\n\nRANK " << i << " represents suffix " << suffi << std::endl; 
 		int suffj = std::distance(tt.begin(),iter_suffj);
+		/////logfile << "RANK " << j << " represents suffix " << suffj << std::endl; 
 		//where is suffix i/j in the suffix array?
 		sdsl::csa_bitcompressed<>::iterator iter_sai = std::find(sa.begin(), sa.end(), suffi);
 		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
 		int sai = std::distance(sa.begin(),iter_sai);
 		int saj = std::distance(sa.begin(),iter_saj);
-		logfile << "\n\nRANK " << i << " represents suffix " << suffi << std::endl; 
-		/////logfile << "which is in pos " << sai << " of suffix array" << std::endl;
-		logfile << "RANK " << j << " represents suffix " << suffj << std::endl; 
-		/////logfile << "which is in pos " << saj << " of suffix array" << std::endl;
+		/////logfile << "suff i is in pos " << sai << " of suffix array" << std::endl;
+		/////logfile << "suff j is in pos " << saj << " of suffix array" << std::endl;
 		//
 		int match = rmq(&lcp, &sai, &saj, &logfile);
 		/////logfile << "match=rmq=lcp= " << match << std::endl;
@@ -207,47 +211,75 @@ for (int i = 0; i < r+1; i++){
 			}
 		} //END_WHILE
 		if (e <= d){
-			logfile << "INSERTING IN ARRAY M the following" << std::endl;
-			logfile << "p = " << p << std::endl;
-			logfile << "e = " << e << std::endl;
+			/////logfile << "INSERTING IN ARRAY M the following" << std::endl;
+			/////logfile << "p = " << p << std::endl;
+			/////logfile << "e = " << e << std::endl;
 			std::pair<int,int> pe = std::make_pair(p,e);
+			/////logfile << "pe = (" <<  pe.first << "," << pe.second << ")" << std::endl;
 			std::pair<int,std::pair<int,int>> jpe = std::make_pair(j,pe);
+			/////logfile << "j = " << jpe.first << std::endl;
 			M[i].push_back(jpe);
-		} else {
-			logfile << "INSERTING IN ARRAY M the following" << std::endl;
+			/////logfile << "inserted" << std::endl;
+		} /* else {
+			/////logfile << "INSERTING IN ARRAY M the following" << std::endl;
 			p = -1;
 			e = -1;
-			logfile << "p = " << p << std::endl;
-			logfile << "e = " << e << std::endl;
+			/////logfile << "p = " << p << std::endl;
+			/////logfile << "e = " << e << std::endl;
 			std::pair<int,int> pe = std::make_pair(p,e);
+			/////logfile << "pe = (" <<  pe.first << "," << pe.second << ")" << std::endl;
 			std::pair<int,std::pair<int,int>> jpe = std::make_pair(j,pe);
+			/////logfile << "j = " << jpe.first << std::endl;
 			M[i].push_back(jpe);
-		}
+			/////logfile << "inserted" << std::endl;
+		} */
 		} //END_IF(i != j)
 	}
 }
-logfile << "finished constructing M" << std::endl;
-/* sort M */
+/* sort M wrt p*/
+for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter = M.begin(); iter != M.end(); iter++) //each vector in M
+{
+	std::sort( (*iter).begin() , (*iter).end() , compare );
+}
 
-/* make copy of M with pointers to factors */
+/* make copy of M with pointers to factors = M' */
+std::vector<std::vector<std::pair<int,std::pair<int,int>>>> MM;
+for (int i = 0; i <= r; i++)
+{
+	std::vector<std::pair<int,std::pair<int,int>>> vec;
+	MM.push_back(vec);
+}
+for (int i = 0; i <= r; i++){ //loop through M
+	if (!M[i].empty()){
+		for (int x = 0; x != M[i].size(); x++){ //loop through M[i]
+			int e = M[i][x].second.second; 
+			if (e != 1){ //if p of i,j is not prime number (only divisble by 1 and itself)
+				for ( int iter = 0 ; iter < M[i][x].second.first ; iter++ ){
+					
+				}
+			}
+		}
+	} else { //if M[i] is empty
+		MM.push_back(-1); //necessary???
+	}
+}
+
 
 
 /* print M */
-/*
-for (int i = 0; i != r; i++){
+logfile << "printing array M" << std::endl;
+for (int i = 0; i <= r; i++){
 	if (M[i].size() != 0){
 		for (int x = 0; x != M[i].size(); x++){
-			logfile << "i = " << i << " ---" << " j = " << M[i][x].first << " ---" << " p = " << M[i][x].second.first << std::endl;
+			logfile << "i = " << i << " ---" << " j = " << M[i][x].first << " ---" << " p = " << M[i][x].second.first << " ---" << " e = " << M[i][x].second.second << std::endl;
 		}
 	}
 }
-*/
+
 /* create string X */
-logfile << "l = " << l << std::endl; 
-logfile << "l' = " << ll << std::endl; 
 std::vector<int> x(ll, -1);
 x.insert( x.end() , tt.begin() , tt.end() );
-logfile << "printing string X" << std::endl;
+logfile << "\n\nprinting string X" << std::endl;
 for (int i=0; i<x.size(); i++) logfile << x[i] << " "; logfile << std::endl;
 
 /* initialise parkih vector */
@@ -256,24 +288,29 @@ logfile << "printing parikh vector" << std::endl;
 for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 
 /* read X */
-/*
-for (int i = 0; i < n-m+1; i++){
+for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 	logfile << "step " << i << std::endl;
-	if ( tt[i] != -1) parikh[tt[i]]++; 
-	if ( ( (i-ll) >= 0 ) && ( tt[i-ll] != -1 ) ) parikh[tt[i-ll]]--;
+	if ( tt[i] != -1) parikh[tt[i]]++; //if new letter is legit, increase its freq in parikh vec
+	if ( ( (i-ll) >= 0 ) && ( tt[i-ll] != -1 ) ) parikh[tt[i-ll]]--; //if old letter was legit & was within text, decrease its freq in parikh vec
 	logfile << "printing parikh vector" << std::endl;
 	for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
-	if ( parikh[tt[i]] >= k ){
+	if ( parikh[tt[i]] >= k ){ //if this pattern occurs >= k times in current window, report solid clump
 		logfile << "reporting solid clump!!!" << std::endl;
-	} else {
+	} else { //if not, try to merge to reach k occurrences
+		if ( ! M[tt[i]].empty() )
+		{
 		logfile << "attempting to merge" << std::endl;
-		std::vector<int> unique;
+		std::vector<int> unique; //this will hold all unique p values in M[tt[i]]
 		unique = pvalues(&M, &tt[i], &logfile);
 		logfile << "printing unique vector outside function" << std::endl;
 		for (int i=0; i<unique.size(); i++) logfile << unique[i] << std::endl;
 		// initialise sum vector with parikh vector values 
-		std::vector<int> sum;
-		for (int i=0; i<unique.size(); i++) sum.push_back( parikh[tt[i]] );
+		std::vector<int> sum; //corresponds to unique vector
+		for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[tt[i]].begin(); iter != M[tt[i]].end(); iter++)
+		{
+		//TODO TODO TODO
+		}
+		////////////for (int i=0; i<unique.size(); i++) sum.push_back( parikh[tt[i]] );
 		//  
 		for (std::vector<std::vector<std::pair<int,int>>>::iterator a = M.begin(); a != M.end(); a++)
 		{
@@ -302,11 +339,12 @@ for (int i = 0; i < n-m+1; i++){
 			{
 				logfile << "todo" << std::endl;
 			}
-		}
+		} //END_FOR
+		} //END_IF( M[t'[i]] is not empty )
 	} //END_IF
 } //END_FOR
-//TODO get rid of -1's in M
-*/
+
+
 
 
 logfile.close();
@@ -317,10 +355,31 @@ return 0;
 
 } //END_MAIN
 
+bool compare
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+( //PARAMS
+  std::pair<int,std::pair<int,int>> *left
+, std::pair<int,std::pair<int,int>> *right
+) //END_PARAMS
+{ //FUNCTION
+return (*left).second.first < (*right).second.first;
+} //END_FUNCTION{compare}
+
+/*
+http://stackoverflow.com/questions/279854/how-do-i-sort-a-vector-of-pairs-based-on-the-second-element-of-the-pair
+std::sort(v.begin(), v.end(), [](const std::pair<int,int> &left, const std::pair<int,int> &right) {
+    return left.second < right.second;
+});
+*/
+
 /******************************* FUNCTION DEFINITIONS */
 int rmq
 /*
-* function: naive range minimum query TODO implemtnt non naive
+* function: naive range minimum query TODO implement non naive
 * time complexity: linear
 * space complexity: n/a
 */
@@ -362,15 +421,15 @@ std::vector<int> pvalues
 * space complexity:
 */
 ( //PARAMS
-  std::vector<std::vector<std::pair<int,int>>> * M
-, int * i
+  std::vector<std::vector<std::pair<int,<std::pair<int,int>>>> * M
+, int * i // = t'[i]
 , std::ofstream *logfile
 ) //END_PARAMS
 { //FUCNTION
 /////(*logfile) << "INSIDE PVALUES FUNCTION" << std::endl;
 /////(*logfile) << "i = " << (*i) << std::endl;
 std::vector<int> unique;
-
+/*
 for (std::vector<std::vector<std::pair<int,int>>>::iterator a = (*M).begin(); a != (*M).end(); a++)
 {
 	for (std::vector<std::pair<int,int>>::iterator b = (*a).begin(); b != (*a).end(); b++)
@@ -378,13 +437,24 @@ for (std::vector<std::vector<std::pair<int,int>>>::iterator a = (*M).begin(); a 
 		if ( ( ( (std::distance( (*M).begin() , a ))==(*i) ) || ( (*b).first == (*i) ) ) && ( (*b).second != -1 ) ) unique.push_back( (*b).second );
 	}
 }
-
+*/
 /*
 unique.push_back((*Mi)[0].second);
 for (std::vector<std::pair<int,int>>::iterator iter = (*Mi).begin() + 1; iter != (*Mi).end(); iter++){
 	if ( (*iter).second != (*(iter-1)).second ) unique.push_back((*iter).second);
 }
 */
+//if ( ! (*M)[*i].empty() )
+//{
+unique.push_back( (*M)[*i].second.second )
+if ( (*M)[*i].size() > 1 )
+{
+	for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = (*M)[*i].begin() + 1; iter != (*M)[*i].end(); iter++)
+	{
+		if ( (*iter).second.second != (*(iter-1)).second.second ) unique.push_back( (*iter).second.second );
+	}
+}
+//}
 /////(*logfile) << "printing unique vector iside function" << std::endl;
 /////for (int i=0; i<unique.size(); i++) (*logfile) << unique[i] << std::endl;
 return unique;
