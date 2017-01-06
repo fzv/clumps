@@ -31,7 +31,7 @@
 
 /******************************* FUNCTION DECLARATIONS */
 int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
-std::vector<int> pvalues(std::vector<std::vector<std::pair<int,int>>> *M, int *i, std::ofstream *logfile);
+std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M, int *i, std::ofstream *logfile);
 bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
 
 /******************************* MAIN FUNCTION */
@@ -243,19 +243,34 @@ for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter 
 }
 
 /* make copy of M with pointers to factors = M' */
+/*
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> MM;
 for (int i = 0; i <= r; i++)
 {
 	std::vector<std::pair<int,std::pair<int,int>>> vec;
 	MM.push_back(vec);
 }
+*/
+/*
+std::vector<std::vector<int*>> MM;
+for (int i = 0; i <= r; i++)
+{
+	<std::vector<int*> vec;
+	MM.push_back(vec);
+}
+*/
+/*
 for (int i = 0; i <= r; i++){ //loop through M
 	if (!M[i].empty()){
 		for (int x = 0; x != M[i].size(); x++){ //loop through M[i]
 			int e = M[i][x].second.second; 
 			if (e != 1){ //if p of i,j is not prime number (only divisble by 1 and itself)
 				for ( int iter = 0 ; iter < M[i][x].second.first ; iter++ ){
-					
+					int p = M[i][iter].second.first;
+					if ( ( M[i][x].second.first % p ) == 0 )
+					{
+						
+					}
 				}
 			}
 		}
@@ -263,6 +278,7 @@ for (int i = 0; i <= r; i++){ //loop through M
 		MM.push_back(-1); //necessary???
 	}
 }
+*/
 
 
 
@@ -288,6 +304,7 @@ logfile << "printing parikh vector" << std::endl;
 for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 
 /* read X */
+/*
 for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 	logfile << "step " << i << std::endl;
 	if ( tt[i] != -1) parikh[tt[i]]++; //if new letter is legit, increase its freq in parikh vec
@@ -342,7 +359,8 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 		} //END_FOR
 		} //END_IF( M[t'[i]] is not empty )
 	} //END_IF
-} //END_FOR
+} //END_FOR(each letter in X)
+*/
 
 
 
@@ -421,8 +439,8 @@ std::vector<int> pvalues
 * space complexity:
 */
 ( //PARAMS
-  std::vector<std::vector<std::pair<int,<std::pair<int,int>>>> * M
-, int * i // = t'[i]
+  std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M
+, int *i // = t'[i]
 , std::ofstream *logfile
 ) //END_PARAMS
 { //FUCNTION
@@ -446,10 +464,10 @@ for (std::vector<std::pair<int,int>>::iterator iter = (*Mi).begin() + 1; iter !=
 */
 //if ( ! (*M)[*i].empty() )
 //{
-unique.push_back( (*M)[*i].second.second )
-if ( (*M)[*i].size() > 1 )
+unique.push_back( (*M)[(*i)][0].second.second );
+if ( (*M)[(*i)].size() > 1 )
 {
-	for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = (*M)[*i].begin() + 1; iter != (*M)[*i].end(); iter++)
+	for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = (*M)[(*i)].begin() + 1; iter != (*M)[(*i)].end(); iter++)
 	{
 		if ( (*iter).second.second != (*(iter-1)).second.second ) unique.push_back( (*iter).second.second );
 	}
