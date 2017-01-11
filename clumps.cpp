@@ -263,33 +263,49 @@ for (int i = 0; i <= r; i++)
 }
 */
 
-std::vector<std::vector<int*>> MM;
+std::vector<std::vector<std::vector<int*>>> MM;
 for (int i = 0; i <= r; i++)
 {
-	std::vector<int*> vec;
+	std::vector<std::vector<int*> vec;
+	for (int it = 0; it < M[i].size(); it++)
+	{
+		std::vector<int*> v;
+		vec.push_back(v);
+	}
 	MM.push_back(vec);
 }
 
-/*
+
+
+
 for (int i = 0; i <= r; i++){ //loop through M
-	if (!M[i].empty()){
+	std::vector<std::vector<int*>> vecvec;
+	std::vector<int*> vec;
+	int* nulptr = NULL;
+	if (!M[i].empty()){ //as long as M[i] contains something
 		for (int x = 0; x != M[i].size(); x++){ //loop through M[i]
 			int e = M[i][x].second.second; 
 			if (e != 1){ //if p of i,j is not prime number (only divisble by 1 and itself)
-				for ( int iter = 0 ; iter < M[i][x].second.first ; iter++ ){
+				for ( int iter = 0 ; iter < x ; iter++ ){ //loop through M[i] again from start to current M[i][x] 
 					int p = M[i][iter].second.first;
 					if ( ( M[i][x].second.first % p ) == 0 )
 					{
-						
+						int* ptr = &(M[i][x].first.first); //j
+						vec.push_back(ptr);
 					}
 				}
+			} else { //if p of i,j is a prime number
+				vec.push_back(nulptr);
 			}
+			vecvec.push_back(vec);
 		}
 	} else { //if M[i] is empty
-		MM.push_back(-1); //necessary???
+		vec.push_back(nulptr);
+		vecvec.push_back(vec);	
 	}
+	MM[i].push_back(vecvec);
 }
-*/
+
 
 
 int* pointerto2 = &(M[0][0].second.first);
