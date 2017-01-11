@@ -34,6 +34,8 @@ int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
 std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M, int *i, std::ofstream *logfile);
 bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
 
+
+
 /******************************* MAIN FUNCTION */
 
 int main(int argc, char* argv[])
@@ -136,7 +138,7 @@ logfile << "highest rank is " << r << std::endl;
 
 
 /* construct array E */
-std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}; // TODO const int??? // TODO add more numbers 
+std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}; // TODO add more numbers 
 std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
 std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
@@ -260,14 +262,14 @@ for (int i = 0; i <= r; i++)
 	MM.push_back(vec);
 }
 */
-/*
+
 std::vector<std::vector<int*>> MM;
 for (int i = 0; i <= r; i++)
 {
-	<std::vector<int*> vec;
+	std::vector<int*> vec;
 	MM.push_back(vec);
 }
-*/
+
 /*
 for (int i = 0; i <= r; i++){ //loop through M
 	if (!M[i].empty()){
@@ -290,6 +292,11 @@ for (int i = 0; i <= r; i++){ //loop through M
 */
 
 
+int* pointerto2 = &(M[0][0].second.first);
+std::cout << pointerto2 << std::endl; //prints address of M[0][0].second.first
+std::cout << (*pointerto2) << std::endl; //prints M[0][0].second.first
+
+
 
 /* print M */
 logfile << "printing array M" << std::endl;
@@ -300,6 +307,12 @@ for (int i = 0; i <= r; i++){
 		}
 	}
 }
+
+
+
+
+
+
 
 /* create string X */
 std::vector<int> x(ll, -1);
