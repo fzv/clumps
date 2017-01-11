@@ -236,12 +236,21 @@ for (int i = 0; i <= r; i++){
 		} //END_IF(i != j)
 	}
 }
-/* sort M wrt p*/
+/* sort M wrt p */
+/*
 for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter = M.begin(); iter != M.end(); iter++) //each vector in M
 {
 	std::sort( (*iter).begin() , (*iter).end() , compare );
 }
-
+*/
+for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter = M.begin(); iter != M.end(); iter++) //each vector in M
+{
+	std::sort( (*iter).begin() , (*iter).end() , [ ]( const std::pair<int,std::pair<int,int>> left, std::pair<int,std::pair<int,int>> right )
+	{
+		return ( left.second.first < right.second.first );
+	}
+	);
+}
 /* make copy of M with pointers to factors = M' */
 /*
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> MM;
@@ -380,11 +389,11 @@ bool compare
 * space complexity:
 */
 ( //PARAMS
-  std::pair<int,std::pair<int,int>> *left
-, std::pair<int,std::pair<int,int>> *right
+  std::pair<int,std::pair<int,int>> left
+, std::pair<int,std::pair<int,int>> right
 ) //END_PARAMS
 { //FUNCTION
-return (*left).second.first < (*right).second.first;
+return ( left.second.first < right.second.first );
 } //END_FUNCTION{compare}
 
 /*
