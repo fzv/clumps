@@ -135,8 +135,6 @@ logfile << "printing T'" << std::endl;
 for (int i=0; i<tt.size(); i++) logfile << tt[i] << " "; logfile << std::endl;
 logfile << "highest rank is " << r << std::endl;
 *******************************************************************************************/
-
-
 /* construct array E */
 std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}; // TODO add more numbers 
 std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
@@ -144,17 +142,14 @@ std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
 logfile << std::endl << "printing array E" << std::endl;
 for (int i=0; i<E.size(); i++) logfile << E[i] << " "; logfile << std::endl;
-
-
-
 /* construction of array M */
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> M;
+M.reserve(r);
 for (int i = 0; i <= r; i++)
 {
 	std::vector<std::pair<int,std::pair<int,int>>> vec;
 	M.push_back(vec);
 }
-
 for (int i = 0; i <= r; i++){
 	for (int j = 0; j <= r; j++){
 		/////logfile << "\n\ni = " << i << "    " << "j = " << j << std::endl;
@@ -193,12 +188,10 @@ for (int i = 0; i <= r; i++){
 			iter_saj = std::find(sa.begin(), sa.end(), suffj);
 			sai = std::distance(sa.begin(),iter_sai);
 			saj = std::distance(sa.begin(),iter_saj);
-
 			/////logfile << "suffix " << suffi << std::endl; 
 			/////logfile << "which is in pos " << sai << " of suffix array" << std::endl;
 			/////logfile << "suffix " << suffj << std::endl; 
 			/////logfile << "which is in pos " << saj << " of suffix array" << std::endl;
-
 			match = rmq(&lcp, &sai, &saj, &logfile);
 			/////logfile << "match=rmq=lcp= " << match << std::endl;
 			pos = match + pos + 1;
@@ -210,7 +203,7 @@ for (int i = 0; i <= r; i++){
 				/////logfile << "e = " << e << std::endl;
 				p = p * E[pos];
 				/////logfile << "prime number = " << p << std::endl;
-			}
+			} //END_IF
 		} //END_WHILE
 		if (e <= d){
 			/////logfile << "INSERTING IN ARRAY M the following" << std::endl;
@@ -245,14 +238,73 @@ for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter 
 	std::sort( (*iter).begin() , (*iter).end() , compare );
 }
 */
+//std::vector<int> sizes(r+1,0);
+//int s = 0;
 for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter = M.begin(); iter != M.end(); iter++) //each vector in M
 {
+	//sizes[s] = (*iter).size();
+	//s++;
 	std::sort( (*iter).begin() , (*iter).end() , [ ]( const std::pair<int,std::pair<int,int>> left, std::pair<int,std::pair<int,int>> right )
 	{
 		return ( left.second.first < right.second.first );
 	}
 	);
 }
+//logfile << "printing sizes vector" << std::endl;
+//for (int i = 0; i < sizes.size(); i++) logfile << " " << sizes[i];
+//logfile << std::endl;
+/* matrix similar to M to hold unique p values in M  */
+std::vector<std::vector<int>> sums;
+sums.reserve(r+1);
+for (int i = 0; i <= r; i++) //each vector in M
+{
+	int myind = M[i].size() - 1;
+	int mysize = M[i][myind].second.first;
+	std::vector<int> myvector( mysize, -1 );
+	sums.push_back(myvector);
+}
+/*
+for (int i = 0; i <= r; i++) //each vector in M
+{
+	std::vector<int> v(sizes[i],-1);
+	if ( ! M[i].empty() )
+	{
+		v[0] = M[i][0].second.first;
+		if ( M[i].size() > 1 )
+		{
+			int j = 1;
+			for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[i].begin() + 1; iter != M[i].end(); iter++)
+			{
+				if ( (*iter).second.first != (*(iter-1)).second.first )
+				{
+					v[j] = (*iter).second.first;
+					j++;
+				}
+			}
+		}
+	}
+	P.push_back(v);	
+}
+*/
+/* print M */
+logfile << "printing array M" << std::endl;
+for (int i = 0; i <= r; i++){
+	if (M[i].size() != 0){
+		for (int x = 0; x != M[i].size(); x++){
+			logfile << "i = " << i << " ---" << " j = " << M[i][x].first << " ---" << " p = " << M[i][x].second.first << " ---" << " e = " << M[i][x].second.second << std::endl;
+		}
+	}
+}
+for (int i = 0; i <= r; i++) //each vector in P
+{
+	logfile << "unique values in M[" << i << "] =";
+	for (int j = 0; j < sums[i].size(); j++)
+	{
+		logfile << " " << sums[i][j];
+	}
+	logfile << std::endl;
+}
+
 /* make copy of M with pointers to factors = M' */
 /*
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> MM;
@@ -262,7 +314,7 @@ for (int i = 0; i <= r; i++)
 	MM.push_back(vec);
 }
 */
-
+/*
 std::vector<std::vector<std::vector<int*>>> MM;
 for (int i = 0; i <= r; i++)
 {
@@ -274,10 +326,6 @@ for (int i = 0; i <= r; i++)
 	}
 	MM.push_back(vec);
 }
-
-
-
-
 for (int i = 0; i <= r; i++){ //loop through M
 	std::vector<std::vector<int*>> vecvec;
 	std::vector<int*> vec;
@@ -305,30 +353,10 @@ for (int i = 0; i <= r; i++){ //loop through M
 	}
 	MM[i].push_back(vecvec);
 }
-
-
-
 int* pointerto2 = &(M[0][0].second.first);
 std::cout << pointerto2 << std::endl; //prints address of M[0][0].second.first
 std::cout << (*pointerto2) << std::endl; //prints M[0][0].second.first
-
-
-
-/* print M */
-logfile << "printing array M" << std::endl;
-for (int i = 0; i <= r; i++){
-	if (M[i].size() != 0){
-		for (int x = 0; x != M[i].size(); x++){
-			logfile << "i = " << i << " ---" << " j = " << M[i][x].first << " ---" << " p = " << M[i][x].second.first << " ---" << " e = " << M[i][x].second.second << std::endl;
-		}
-	}
-}
-
-
-
-
-
-
+*/
 
 /* create string X */
 std::vector<int> x(ll, -1);
@@ -355,18 +383,12 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 		if ( ! M[tt[i]].empty() )
 		{
 		logfile << "attempting to merge" << std::endl;
-		std::vector<int> unique; //this will hold all unique p values in M[tt[i]]
-		unique = pvalues(&M, &tt[i], &logfile);
-		logfile << "printing unique vector outside function" << std::endl;
-		for (int i=0; i<unique.size(); i++) logfile << unique[i] << std::endl;
 		// initialise sum vector with parikh vector values 
-		std::vector<int> sum; //corresponds to unique vector
+		std::vector<int> sum( P[tt[i]].size() , -1 );
 		for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[tt[i]].begin(); iter != M[tt[i]].end(); iter++)
 		{
-		//TODO TODO TODO
+			//TODO TODO TODO
 		}
-		////////////for (int i=0; i<unique.size(); i++) sum.push_back( parikh[tt[i]] );
-		//  
 		for (std::vector<std::vector<std::pair<int,int>>>::iterator a = M.begin(); a != M.end(); a++)
 		{
 			for (std::vector<std::pair<int,int>>::iterator b = (*a).begin(); b != (*a).end(); b++)
@@ -399,10 +421,6 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 	} //END_IF
 } //END_FOR(each letter in X)
 */
-
-
-
-
 logfile.close();
 
 
@@ -469,7 +487,6 @@ if ( j != (i+1) ){
 } //END_IF
 return min;
 } //END_FUNCTION(rmq)
-
 std::vector<int> pvalues
 /*
 * function: 
