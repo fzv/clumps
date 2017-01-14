@@ -253,23 +253,23 @@ for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter 
 //logfile << "printing sizes vector" << std::endl;
 //for (int i = 0; i < sizes.size(); i++) logfile << " " << sizes[i];
 //logfile << std::endl;
-/* matrix similar to M to hold unique p values in M  */
-std::vector<std::vector<int>> sums;
+/* matrix similar to M to hold unique p values in M, and the sum of their frequencies in current inwodw  */
+std::vector<std::vector<std::pair<int,int>>> sums;
 sums.reserve(r+1);
 for (int i = 0; i <= r; i++) //each vector in M
 {
 	int myind = M[i].size() - 1;
 	int mysize = M[i][myind].second.first;
-	std::vector<int> myvector( mysize, -1 );
+	std::vector<std::pair<int,int>> myvector( mysize, std::pair<int,int>(-1,-1) );
 	sums.push_back(myvector);
 }
-/*
+
 for (int i = 0; i <= r; i++) //each vector in M
 {
-	std::vector<int> v(sizes[i],-1);
+	//std::vector<int> v(sizes[i],-1);
 	if ( ! M[i].empty() )
 	{
-		v[0] = M[i][0].second.first;
+		sums[i][0].first = M[i][0].second.first;
 		if ( M[i].size() > 1 )
 		{
 			int j = 1;
@@ -277,15 +277,15 @@ for (int i = 0; i <= r; i++) //each vector in M
 			{
 				if ( (*iter).second.first != (*(iter-1)).second.first )
 				{
-					v[j] = (*iter).second.first;
+					sums[i][j].first = (*iter).second.first;
 					j++;
 				}
 			}
 		}
 	}
-	P.push_back(v);	
+	//P.push_back(v);	
 }
-*/
+
 /* print M */
 logfile << "printing array M" << std::endl;
 for (int i = 0; i <= r; i++){
@@ -300,7 +300,7 @@ for (int i = 0; i <= r; i++) //each vector in P
 	logfile << "unique values in M[" << i << "] =";
 	for (int j = 0; j < sums[i].size(); j++)
 	{
-		logfile << " " << sums[i][j];
+		logfile << " " << sums[i][j].first;
 	}
 	logfile << std::endl;
 }
@@ -370,7 +370,7 @@ logfile << "printing parikh vector" << std::endl;
 for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 
 /* read X */
-/*
+
 for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 	logfile << "step " << i << std::endl;
 	if ( tt[i] != -1) parikh[tt[i]]++; //if new letter is legit, increase its freq in parikh vec
@@ -384,6 +384,7 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 		{
 		logfile << "attempting to merge" << std::endl;
 		// initialise sum vector with parikh vector values 
+/*
 		std::vector<int> sum( P[tt[i]].size() , -1 );
 		for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[tt[i]].begin(); iter != M[tt[i]].end(); iter++)
 		{
@@ -418,9 +419,10 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 			}
 		} //END_FOR
 		} //END_IF( M[t'[i]] is not empty )
+		*/
 	} //END_IF
 } //END_FOR(each letter in X)
-*/
+
 logfile.close();
 
 
