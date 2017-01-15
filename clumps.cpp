@@ -34,7 +34,8 @@ int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
 std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M, int *i, std::ofstream *logfile);
 bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
 void fillSums(std::vector<std::pair<int,std::pair<int,int>>> *Mi, std::map<int,int> *sumsi, std::vector<int> *parikh, std::ofstream *logfile);
-void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,std::vector<bool> *isPrime,std::ofstream *logfile);
+void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,std::vector<bool> *isPrime,int *tpos,std::ofstream *logfile);
+std::string getPattern(int *tpos,int *p,std::ofstream *logfile);
 
 /******************************* MAIN FUNCTION */
 
@@ -408,6 +409,8 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string T'
 	for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 	if ( parikh[tt[i]] >= k ){ //if this pattern occurs >= k times in current window, report solid clump
 		logfile << "reporting solid clump with pattern " << pat << std::endl;
+		int p = -1;
+		logfile << "pattern is " << getPattern( &i , &p , &logfile ) << std::endl;
 	} else { //if not, try to merge to reach k occurrences
 		if ( ! M[tt[i]].empty() )
 		{
@@ -423,7 +426,7 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string T'
 				logfile << iter.first << " - " << iter.second << std::endl;
 			}
 		}
-		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &isPrime , &logfile);
+		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &isPrime , &i , &logfile);
 /*
 		std::vector<int> sum( P[tt[i]].size() , -1 );
 		for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[tt[i]].begin(); iter != M[tt[i]].end(); iter++)
@@ -471,6 +474,23 @@ return 0;
 
 } //END_MAIN
 /******************************* FUNCTION DEFINITIONS */
+std::string getPattern
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+( //PARAMS
+  int *tpos
+, int *p
+, std::ofstream *logfile
+) //END_PARAMS
+{ //FUNCTION
+std::string pattern = "string";
+(*logfile) << "p = " << (*p) << std::endl;
+(*logfile) << "i s.t. tt[i] is current pos = " << (*tpos) << std::endl;
+return pattern;
+} //END_FUNCTION(getPattern)
 void checkSums
 /*
 * function: 
@@ -483,6 +503,7 @@ void checkSums
 , int *k
 , std::vector<int> *E
 , std::vector<bool> *isPrime
+, int *tpos
 , std::ofstream *logfile
 ) //END_PARAMS
 { //FUNCTION
@@ -496,6 +517,7 @@ for (std::map<int,int>::iterator it = (*sumsi).begin(); it != (*sumsi).end(); it
 		if (( ((*it).second + (*occ)) >= (*k) )){
 		(*logfile) << "reporting LEVEL 1 deg pattern made from???" << std::endl;
 		(*logfile) << (*it).first << " is the p" << std::endl;
+		(*logfile) << "pattern is " << getPattern( &(*tpos) , &((*it).first) , &(*logfile) ) << std::endl;
 		}
 	} else { // LEVEL 2 - LEVEL M
 		(*logfile) << "trying LEVEL 2...m merge" << std::endl;
@@ -510,6 +532,7 @@ for (std::map<int,int>::iterator it = (*sumsi).begin(); it != (*sumsi).end(); it
 		{
 			(*logfile) << "reporting deg pattern made from???" << std::endl;
 			(*logfile) << (*it).first << " is the p" << std::endl;
+			(*logfile) << "pattern is " << getPattern( tpos , (*it).first , logfile ) << std::endl;
 		}
 	}
 }
