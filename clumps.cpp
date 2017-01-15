@@ -34,7 +34,7 @@ int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
 std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M, int *i, std::ofstream *logfile);
 bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
 void fillSums(std::vector<std::pair<int,std::pair<int,int>>> *Mi, std::map<int,int> *sumsi, std::vector<int> *parikh, std::ofstream *logfile);
-void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,std::ofstream *logfile);
+void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,std::vector<bool> *isPrime,std::ofstream *logfile);
 
 /******************************* MAIN FUNCTION */
 
@@ -142,6 +142,13 @@ std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
 logfile << std::endl << "printing array E" << std::endl;
 for (int i=0; i<E.size(); i++) logfile << E[i] << " "; logfile << std::endl;
+int product = 1;
+for (int i=0; i<E.size(); i++) product = product * E[i];
+logfile << "product of all m prime numbers in E = " << product << std::endl;
+std::vector<bool> isPrime(product+1,false);
+for (int i=0; i<E.size(); i++) isPrime[E[i]] = true;
+logfile << "printing isPrime" << std::endl;
+for (int i=0; i<isPrime.size(); i++) logfile << i << ": " << isPrime[i] << std::endl;
 /* construction of array M */
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> M;
 M.reserve(r);
@@ -416,9 +423,7 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string T'
 				logfile << iter.first << " - " << iter.second << std::endl;
 			}
 		}
-		logfile << "calling checkSums()" << std::endl;
-		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &logfile);
-		logfile << std::endl << "checkSums() completed" << std::endl;
+		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &isPrime , &logfile);
 /*
 		std::vector<int> sum( P[tt[i]].size() , -1 );
 		for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[tt[i]].begin(); iter != M[tt[i]].end(); iter++)
@@ -477,17 +482,35 @@ void checkSums
 , std::map<int,int> *sumsi
 , int *k
 , std::vector<int> *E
+, std::vector<bool> *isPrime
 , std::ofstream *logfile
 ) //END_PARAMS
 { //FUNCTION
-// LEVEL 1
+(*logfile) << "inside checkSums()" << std::endl;
 for (std::map<int,int>::iterator it = (*sumsi).begin(); it != (*sumsi).end(); it++)
 {
-	if ( ((*it).second + (*occ)) >= (*k) )
-	{
-		(*logfile) << "reporting deg pattern made from???" << std::endl;
-		(*logfile) << (*it).first << "is the p" << std::endl;
+	(*logfile) << (*it).first << " is the p we are looking at currently............" << std::endl;
+	if  ( ( (*isPrime)[ (*it).first ] == true ) )
+	{// LEVEL 1
+		(*logfile) << "trying LEVEL 1 merge" << std::endl;
+		if (( ((*it).second + (*occ)) >= (*k) )){
+		(*logfile) << "reporting LEVEL 1 deg pattern made from???" << std::endl;
+		(*logfile) << (*it).first << " is the p" << std::endl;
+		}
 	} else { // LEVEL 2 - LEVEL M
+		(*logfile) << "trying LEVEL 2...m merge" << std::endl;
+		int sum = (*occ) + (*it).second;
+		(*logfile) << "sum before adding = " << sum << std::endl; 
+		for (std::map<int,int>::iterator it2 = (*sumsi).begin(); it2 != (*sumsi).end(); it2++)
+		{
+			if ( ( (*it).first!=(*it2).first ) && ( ((*it).first % (*it2).first ))==0 ) sum += (*it2).second;
+		}
+		(*logfile) << "sum after adding = " << sum << std::endl; 
+		if (sum >= (*k))
+		{
+			(*logfile) << "reporting deg pattern made from???" << std::endl;
+			(*logfile) << (*it).first << " is the p" << std::endl;
+		}
 	}
 }
 } //END_FUNCTION
