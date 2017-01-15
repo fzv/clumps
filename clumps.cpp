@@ -33,8 +33,8 @@
 int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
 std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M, int *i, std::ofstream *logfile);
 bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
-
-
+void fillSums(std::vector<std::pair<int,std::pair<int,int>>> *Mi, std::map<int,int> *sumsi, std::vector<int> *parikh, std::ofstream *logfile);
+void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,std::ofstream *logfile);
 
 /******************************* MAIN FUNCTION */
 
@@ -254,8 +254,10 @@ for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter 
 //for (int i = 0; i < sizes.size(); i++) logfile << " " << sizes[i];
 //logfile << std::endl;
 /* matrix similar to M to hold unique p values in M, and the sum of their frequencies in current inwodw  */
-std::vector<std::vector<std::pair<int,int>>> sums;
+//std::vector<std::vector<std::pair<int,int>>> sums;
+std::vector<std::map<int,int>> sums;
 sums.reserve(r+1);
+/*
 for (int i = 0; i <= r; i++) //each vector in M
 {
 	int myind = M[i].size() - 1;
@@ -263,28 +265,34 @@ for (int i = 0; i <= r; i++) //each vector in M
 	std::vector<std::pair<int,int>> myvector( mysize, std::pair<int,int>(-1,-1) );
 	sums.push_back(myvector);
 }
-
+*/
 for (int i = 0; i <= r; i++) //each vector in M
 {
 	//std::vector<int> v(sizes[i],-1);
+	std::map<int,int> mymap;
 	if ( ! M[i].empty() )
 	{
-		sums[i][0].first = M[i][0].second.first;
+		//sums[i][0].first = M[i][0].second.first;
+		mymap[ M[i][0].second.first ] = 0;
 		if ( M[i].size() > 1 )
 		{
-			int j = 1;
+			//int j = 1;
 			for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[i].begin() + 1; iter != M[i].end(); iter++)
 			{
 				if ( (*iter).second.first != (*(iter-1)).second.first )
 				{
-					sums[i][j].first = (*iter).second.first;
-					j++;
+					//sums[i][j].first = (*iter).second.first;
+					//j++;
+					mymap[ (*iter).second.first ] = 0;
 				}
 			}
 		}
+	} else {
+		mymap[-1] = -1;
 	}
-	//P.push_back(v);	
+	sums.push_back(mymap);	
 }
+logfile << "sums has been initialised" << std::endl;
 
 /* print M */
 logfile << "printing array M" << std::endl;
@@ -295,6 +303,7 @@ for (int i = 0; i <= r; i++){
 		}
 	}
 }
+/*
 for (int i = 0; i <= r; i++) //each vector in P
 {
 	logfile << "unique values in M[" << i << "] =";
@@ -304,7 +313,16 @@ for (int i = 0; i <= r; i++) //each vector in P
 	}
 	logfile << std::endl;
 }
-
+*/
+logfile << "printing sums" << std::endl;
+for (int i = 0; i <= r; i++) //each map in sums
+{
+	logfile << "i = " << i << std::endl;
+	for (auto const& iter : sums[i])
+	{
+		logfile << iter.first << " - " << iter.second << std::endl;
+	}
+}
 /* make copy of M with pointers to factors = M' */
 /*
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> MM;
@@ -359,11 +377,12 @@ std::cout << (*pointerto2) << std::endl; //prints M[0][0].second.first
 */
 
 /* create string X */
+/*
 std::vector<int> x(ll, -1);
 x.insert( x.end() , tt.begin() , tt.end() );
 logfile << "\n\nprinting string X" << std::endl;
 for (int i=0; i<x.size(); i++) logfile << x[i] << " "; logfile << std::endl;
-
+*/
 /* initialise parkih vector */
 std::vector<int> parikh(r+1, 0);
 logfile << "printing parikh vector" << std::endl;
@@ -371,19 +390,35 @@ for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 
 /* read X */
 
-for (int i = 0; i < n-m+1; i++){ //read each letter in string X
-	logfile << "step " << i << std::endl;
+for (int i = 0; i < n-m+1; i++){ //read each letter in string T'
+	logfile << std::endl << "step " << i << std::endl;
+	std::string pat = t.substr(i,3);
+	logfile << "reading pattern " << pat << std::endl;
+	logfile << "represented by rank " << tt[i] << std::endl;
 	if ( tt[i] != -1) parikh[tt[i]]++; //if new letter is legit, increase its freq in parikh vec
 	if ( ( (i-ll) >= 0 ) && ( tt[i-ll] != -1 ) ) parikh[tt[i-ll]]--; //if old letter was legit & was within text, decrease its freq in parikh vec
 	logfile << "printing parikh vector" << std::endl;
 	for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 	if ( parikh[tt[i]] >= k ){ //if this pattern occurs >= k times in current window, report solid clump
-		logfile << "reporting solid clump!!!" << std::endl;
+		logfile << "reporting solid clump with pattern " << pat << std::endl;
 	} else { //if not, try to merge to reach k occurrences
 		if ( ! M[tt[i]].empty() )
 		{
 		logfile << "attempting to merge" << std::endl;
-		// initialise sum vector with parikh vector values 
+		fillSums(&M[tt[i]], &sums[tt[i]], &parikh, &logfile);
+		
+		logfile << "printing sums in main" << std::endl;
+		for (int i = 0; i <= r; i++) //each map in sums
+		{
+			logfile << "i = " << i << std::endl;
+			for (auto const& iter : sums[i])
+			{
+				logfile << iter.first << " - " << iter.second << std::endl;
+			}
+		}
+		logfile << "calling checkSums()" << std::endl;
+		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &logfile);
+		logfile << std::endl << "checkSums() completed" << std::endl;
 /*
 		std::vector<int> sum( P[tt[i]].size() , -1 );
 		for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[tt[i]].begin(); iter != M[tt[i]].end(); iter++)
@@ -418,8 +453,8 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string X
 				logfile << "todo" << std::endl;
 			}
 		} //END_FOR
-		} //END_IF( M[t'[i]] is not empty )
 		*/
+		} //END_IF( M[t'[i]] is not empty )
 	} //END_IF
 } //END_FOR(each letter in X)
 
@@ -430,6 +465,53 @@ logfile.close();
 return 0;
 
 } //END_MAIN
+/******************************* FUNCTION DEFINITIONS */
+void checkSums
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+( //PARAMS
+  int *occ
+, std::map<int,int> *sumsi
+, int *k
+, std::vector<int> *E
+, std::ofstream *logfile
+) //END_PARAMS
+{ //FUNCTION
+// LEVEL 1
+for (std::map<int,int>::iterator it = (*sumsi).begin(); it != (*sumsi).end(); it++)
+{
+	if ( ((*it).second + (*occ)) >= (*k) )
+	{
+		(*logfile) << "reporting deg pattern made from???" << std::endl;
+		(*logfile) << (*it).first << "is the p" << std::endl;
+	} else { // LEVEL 2 - LEVEL M
+	}
+}
+} //END_FUNCTION
+void fillSums
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+( //PARAMS
+  std::vector<std::pair<int,std::pair<int,int>>> *Mi
+, std::map<int,int> *sumsi
+, std::vector<int> *parikh
+, std::ofstream *logfile
+) //END_PARAMS
+{ //FUNCTION
+for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = (*Mi).begin();
+	iter != (*Mi).end();
+	iter++)
+{
+	//(*logfile) << (*sumsi)[ ( (*iter).second.first ) ] << std::endl;
+	(*sumsi)[ (*iter).second.first ] += (*parikh)[ (*iter).first ];
+}
+} //END_FUNCTION(fillSums)
 
 bool compare
 /*
@@ -452,7 +534,6 @@ std::sort(v.begin(), v.end(), [](const std::pair<int,int> &left, const std::pair
 });
 */
 
-/******************************* FUNCTION DEFINITIONS */
 int rmq
 /*
 * function: naive range minimum query TODO implement non naive
