@@ -5,7 +5,7 @@
 //http://stackoverflow.com/questions/279854/how-do-i-sort-a-vector-of-pairs-based-on-the-second-element-of-the-pair
 
 // LIST OF TODO
-//TODO: if d == 0 ????
+//TODO: if d == 0 ----------- new class?
 
 /**********************
 * HEADERS & INCLUDES
@@ -44,8 +44,9 @@ int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
 std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M, int *i, std::ofstream *logfile);
 void fillSums(std::vector<std::pair<int,std::pair<int,int>>> *Mi, std::map<int,int> *sumsi, std::vector<int> *parikh, std::ofstream *logfile);
 void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,std::vector<bool> *isPrime,int *tpos,std::vector<int> *tt,std::vector<std::pair<int,std::pair<int,int>>> *Mi,std::string *t,int *m,std::ofstream *logfile);
-std::string getPattern(int &tpos,const int &p,std::vector<int>& tt,std::string& t,int& m,std::ofstream &logfile);
-void printSums(std::vector<std::map<int,int>> sums& sums, int& r);
+std::string getPattern(int& tpos , const int& p , std::vector<int>& tt , std::string& t , int& m , std::ofstream& logfile);
+void printSums(std::vector<std::map<int,int>>& sums , int& r , std::ofstream& logfile);
+void constructT(std::vector<int>& tt , int& r);
 
 /**********************
 * MAIN FUNCTION
@@ -113,27 +114,10 @@ construct_im(lcp, t, 1);
 logfile << std::endl << "printing lcp array" << std::endl;
 for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); iter++) logfile << (*iter) << " "; logfile << std::endl;
 
-/* construct T' without  frequently occuring patterns of length m */
+/* construct T' without frequently occuring patterns of length m */
 std::vector<int> tt( (n-m+1) , -1 );
 int r = -1;
-int i = 0;
-do{
-	if ( sa[i] < (n-m+1) ){ //omitting suffixes of length < m
-		int j = i;
-		while ( ( sa[j+1] < (n-m+1) ) && ( lcp[j+1] >= m ) ){ //while (next suffix in SA is longer than m) AND (this suffix and next suffix in SA have lcp > m)
-			j++; //no. of occ of this suffix in tt + i
-		}
-		if ( j-i < ceil(ll/2) ){ //if no. of occ < l'/2
-			r++;
-			for (int k=i; k<=j; k++){ //for each of the identical m-grams
-				tt[sa[k]] = r; //set them to r
-			}
-		}
-		i = j+1; //move to the next unique m-gram
-	} else { //if len of suffix is less than m
-		i++; //skip this suffix
-	}
-} while (i != n+1); //loop through text
+constructT(tt , r);
 
 /* FOR TESTING ONLY: print T' */
 logfile << std::endl << "printing T'" << std::endl;
@@ -146,7 +130,7 @@ std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
 std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
 
-/* FOR TESTING ONLY: print array E*/
+/* FOR TESTING ONLY: print array E */
 logfile << std::endl << "printing array E" << std::endl;
 for (int i=0; i<E.size(); i++) logfile << E[i] << " "; logfile << std::endl;
 
@@ -224,7 +208,7 @@ for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter 
 	);
 }
 
-/* matrix similar to M to hold unique p values in M, and the sum of their frequencies in current inwodw  */
+/* matrix similar to M to hold unique p values in M, and the sum of their frequencies in current window  */
 std::vector<std::map<int,int>> sums;
 sums.reserve(r+1);
 for (int i = 0; i <= r; i++) //each vector in M
@@ -267,14 +251,14 @@ logfile << "printing parikh vector" << std::endl;
 for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 
 /* read T' */
-for (int i = 0; i < n-m+1; i++){ //read each letter in string T'
+for (int i = 0; i < n-m+1; i++){
 
 	/* m-gram */
-	std::string pat = t.substr(i,3);
+	std::string pattern = t.substr(i,3);
 
 	/* FOR TESTING ONLY:  print detials */
 	logfile << std::endl << "step " << i << std::endl;
-	logfile << "reading pattern " << pat << std::endl;
+	logfile << "reading pattern " << pattern << std::endl;
 	logfile << "represented by rank " << tt[i] << std::endl;
 
 	/* shift window */
@@ -287,15 +271,14 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string T'
 
 	/* try to report something */
 	if ( parikh[tt[i]] >= k ){ //if this pattern occurs >= k times in current window, report solid clump
-		logfile << "reporting solid clump with pattern " << pat << std::endl;
-		const int p = -1;
-		//logfile << "pattern is " << getPattern( i , p , tt ,  , logfile ) << std::endl; TODO
+		logfile << "reporting solid clump with pattern " << pattern << std::endl;
+		//const int p = -1; ///TODO why was this ever here?
 	} else { //if not, try to merge to reach k occurrences
 		if ( ! M[tt[i]].empty() )
 		{
 		logfile << "attempting to merge" << std::endl;
 		fillSums(&M[tt[i]], &sums[tt[i]], &parikh, &logfile);
-		printSums(sums,r);
+		printSums(sums,r,logfile);
 		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &isPrime , &i , &tt , &M[tt[i]] , &t , &m , &logfile);
 		} //END_IF( M[t'[i]] is not empty )
 	} //END_IF
@@ -308,19 +291,50 @@ std::cout << asctime(localtime(&cttt));
 return 0;
 
 } //END_MAIN
-/**********************
+/***************************
 * FUNCTION DECLARATIONS
-***********************/
+****************************/
+void constructT
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+( //PARAMS
+std::vector<int>& tt
+, int& r
+) //END_PARAMS
+{ //FUNCTION
+int i = 0;
+do{
+	if ( sa[i] < (n-m+1) ){ //omitting suffixes of length < m
+		int j = i;
+		while ( ( sa[j+1] < (n-m+1) ) && ( lcp[j+1] >= m ) ){ //while (next suffix in SA is longer than m) AND (this suffix and next suffix in SA have lcp > m)
+			j++; //no. of occ of this suffix in tt + i
+		}
+		if ( j-i < ceil(ll/2) ){ //if no. of occ < l'/2
+			r++;
+			for (int k=i; k<=j; k++){ //for each of the identical m-grams
+				tt[sa[k]] = r; //set them to r
+			}
+		}
+		i = j+1; //move to the next unique m-gram
+	} else { //if len of suffix is less than m
+		i++; //skip this suffix
+	}
+} while (i != n+1); //loop through text
+} //END_FUNCTION(constructT)
 void printSums
 /*
 * function: 
 * time complexity: 
 * space complexity:
 */
-(
-std::vector<std::map<int,int>> sums& sums
+( //PARAMS
+std::vector<std::map<int,int>>& sums
 , int& r
-)
+, std::ofstream& logfile
+) //END_PARAMS
 { //FUCNTION(printSums)
 for (int i = 0; i <= r; i++) //each map in sums
 {
