@@ -2,7 +2,9 @@
 // k1457070@nmscde000493:~/clumps$ ./clumps paper.fas -l 6 -m 3 -d 1
 //k1457070@nmscde000493:~/clumps$ ./clumps paper.fas -l 7 -m 3 -d 1 -k 2
 
-/******************************* HEADERS + INCLUDES */
+/**********************
+* HEADERS & INCLUDES
+***********************/
 #include <iostream>
 /*
 * cout
@@ -28,21 +30,40 @@
 #include <iterator>
 #include "sdsl/suffix_arrays.hpp"
 #include "sdsl/lcp.hpp"
+#include <ctime>
 
-/******************************* FUNCTION DECLARATIONS */
+/**********************
+* FUNCTION DECLARATIONS
+***********************/
 int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
-std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M, int *i, std::ofstream *logfile);
+std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M,
+int *i, std::ofstream *logfile);
 bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
-void fillSums(std::vector<std::pair<int,std::pair<int,int>>> *Mi, std::map<int,int> *sumsi, std::vector<int> *parikh, std::ofstream *logfile);
-void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,std::vector<bool> *isPrime,int *tpos,std::vector<int> *tt,std::vector<std::pair<int,std::pair<int,int>>> *Mi,std::string *t,int *m,std::ofstream *logfile);
-std::string getPattern(int &tpos,const int &p,std::vector<int>& tt,std::string& t,int& m,std::ofstream &logfile);
+void fillSums(std::vector<std::pair<int,std::pair<int,int>>> *Mi, std::map<int,int> *sumsi,
+std::vector<int> *parikh, std::ofstream *logfile);
+void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,
+std::vector<bool> *isPrime,int *tpos,std::vector<int> *tt,
+std::vector<std::pair<int,std::pair<int,int>>> *Mi,std::string *t,int *m,std::ofstream *logfile);
+std::string getPattern(int &tpos,const int &p,std::vector<int>& tt,std::string& t,int& m,
+std::ofstream &logfile);
+void constructT(std::vector<int>& tt , int& r , sdsl::csa_bitcompressed<>& sa, int& n , int& m ,
+sdsl::lcp_bitcompressed<>& lcp , int& ll);
+void constructM(std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M , int& r ,
+std::vector<int>& tt , sdsl::csa_bitcompressed<>& sa , sdsl::lcp_bitcompressed<>& lcp , int& d ,
+std::vector<int>& E
+, int& m , std::ofstream& logfile);
+void sortM(std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M);
 
-/******************************* MAIN FUNCTION */
+/**********************
+* MAIN FUNCTION
+***********************/
 
 int main(int argc, char* argv[])
 {
 
-std::cout << "Welcome to CLUMP" << std::endl;
+/* print time */
+const time_t ctt = time(0);
+std::cout << asctime(localtime(&ctt));
 
 /* Begin logging */
 
@@ -50,17 +71,8 @@ std::ofstream logfile;
 logfile.open("clumps.log");
 logfile << "LOG" << std::endl;
 
-/* parse input */
-
+/* parse text */
 std::string textfile = argv[1];
-int l = atoi(argv[3]);
-int m = atoi(argv[5]);
-int ll = l-m+1;
-logfile << "l'= " << ll << std::endl;
-logfile << "l/2= " << ceil(ll/2) << std::endl;
-int d = atoi(argv[7]);
-int k = atoi(argv[9]);
-//TODO: if d == 0 ????
 std::ifstream tFile(textfile);
 std::string tline;
 std::stringstream tstream;
@@ -76,120 +88,96 @@ if (tFile.is_open()){
 }
 std::string t = tstream.str();
 int n = t.length();
+
+/* TESTING ONLY: print text */
 logfile << std::endl << "printing text" << std::endl;
 logfile << t << std::endl;
 logfile << std::endl << "n = " << n << std::endl;
 
-/* construct suffix array of t */
+/* parse input params */
+int l = atoi(argv[3]);
+int m = atoi(argv[5]);
+int ll = l-m+1;
+int d = atoi(argv[7]);
+int k = atoi(argv[9]);
 
+/* TESTING ONLY: print some params */
+logfile << "l'= " << ll << std::endl;
+logfile << "l/2= " << ceil(ll/2) << std::endl;
+
+/* construct suffix array of t */
 sdsl::csa_bitcompressed<> sa;
 construct_im(sa, t, 1);
+
+/* TESTING ONLY: print suffix array */
 logfile << std::endl << "printing suffix array" << std::endl;
-for (sdsl::csa_bitcompressed<>::iterator iter = sa.begin(); iter != sa.end(); iter++) logfile << (*iter) << " "; logfile << std::endl;
+for (sdsl::csa_bitcompressed<>::iterator iter = sa.begin(); iter != sa.end(); iter++)
+{
+logfile << (*iter) << " ";
+}
+ logfile << std::endl;
 
 /* constuct longest common prefix array of t */
-
 sdsl::lcp_bitcompressed<> lcp;
 construct_im(lcp, t, 1);
-logfile << std::endl << "printing lcp array" << std::endl;
-for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); iter++) logfile << (*iter) << " "; logfile << std::endl;
 
-/* construct t' without  frequently occuring patterns of length m */
+/* TESTING ONLY: print LCP array */
+logfile << std::endl << "printing lcp array" << std::endl;
+for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); iter++)
+{
+logfile << (*iter) << " ";
+}
+logfile << std::endl;
+
+/* construct T' without frequently occuring patterns of length m */
 std::vector<int> tt( (n-m+1) , -1);
 int r = -1;
-int i = 0;
-do{
-	if ( sa[i] < (n-m+1) ){ //omitting suffixes of length < m
-		int j = i;
-		while ( ( sa[j+1] < (n-m+1) ) && ( lcp[j+1] >= m ) ){ //while (next suffix in SA is longer than m) AND (this suffix and next suffix in SA have lcp > m)
-			j++; //no. of occ of this suffix in tt + i
-		}
-		if ( j-i < ceil(ll/2) ){ //if no. of occ < l'/2
-			r++;
-			for (int k=i; k<=j; k++){ //for each of the identical m-grams
-				tt[sa[k]] = r; //set them to r
-			}
-		}
-		i = j+1; //move to the next unique m-gram
-	} else { //if len of suffix is less than m
-		i++; //skip this suffix
-	}
-} while (i != n+1); //loop through text
-logfile << std::endl << "printing T'" << std::endl;
-for (int i=0; i<tt.size(); i++) logfile << tt[i] << " "; logfile << std::endl;
-logfile << std::endl << "highest rank is " << r << std::endl;
+constructT(tt , r , sa , n , m , lcp , ll);
+
 /* construct array E */
 std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}; // TODO add more numbers 
 std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
 std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
 std::vector<int> E(first,last);
+
+/* FOR TESTING ONLY: print array E */
 logfile << std::endl << "printing array E" << std::endl;
-for (int i=0; i<E.size(); i++) logfile << E[i] << " "; logfile << std::endl;
+for (int i=0; i<E.size(); i++)
+{
+logfile << E[i] << " "; logfile << std::endl;
+}
+
+/* compute largest possible p value (pmax) */
 int product = 1;
-for (int i=0; i<E.size(); i++) product = product * E[i];
+for (int i=0; i<E.size(); i++)
+{
+product = product * E[i];
+}
+
+/* FOR TESTING ONLY: print pmax */
 logfile << "product of all m prime numbers in E = " << product << std::endl;
-std::vector<bool> isPrime(product+1,false);
+
+/* construct isPrime */
+std::vector<bool> isPrime( product+1 , false );
 for (int i=0; i<E.size(); i++) isPrime[E[i]] = true;
+
+/* FOR TESTING ONLY: print isPrime */
 logfile << "printing isPrime" << std::endl;
-for (int i=0; i<isPrime.size(); i++) logfile << i << ": " << isPrime[i] << std::endl;
+for (int i=0; i<isPrime.size(); i++)
+{
+logfile << i << ": " << isPrime[i] << std::endl;
+}
+
 /* construction of array M */
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> M;
 M.reserve(r);
-for (int i = 0; i <= r; i++)
-{
-	std::vector<std::pair<int,std::pair<int,int>>> vec;
-	M.push_back(vec);
-}
-for (int i = 0; i <= r; i++){
-	for (int j = 0; j <= r; j++){
-		if (i != j){
-		int p = 1;
-		//which suffix does rank i/j represent?
-		std::vector<int>::iterator iter_suffi = std::find(tt.begin(), tt.end(), i);
-		std::vector<int>::iterator iter_suffj = std::find(tt.begin(), tt.end(), j);
-		int suffi = std::distance(tt.begin(),iter_suffi);
-		int suffj = std::distance(tt.begin(),iter_suffj);
-		//where is suffix i/j in the suffix array?
-		sdsl::csa_bitcompressed<>::iterator iter_sai = std::find(sa.begin(), sa.end(), suffi);
-		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
-		int sai = std::distance(sa.begin(),iter_sai);
-		int saj = std::distance(sa.begin(),iter_saj);
-		int match = rmq(&lcp, &sai, &saj, &logfile);
-		int pos = match;
-		int e = 1;
-		p = p * E[pos];
-		while ( (pos < m) && (e <= d) ){
-			suffi = suffi + match + 1;
-			suffj = suffj + match + 1;
-			iter_sai = std::find(sa.begin(), sa.end(), suffi);
-			iter_saj = std::find(sa.begin(), sa.end(), suffj);
-			sai = std::distance(sa.begin(),iter_sai);
-			saj = std::distance(sa.begin(),iter_saj);
-			match = rmq(&lcp, &sai, &saj, &logfile);
-			pos = match + pos + 1;
-			if (pos < m){
-				e++;
-				p = p * E[pos];
-			} //END_IF
-		} //END_WHILE
-		if (e <= d){
-			std::pair<int,int> pe = std::make_pair(p,e);
-			std::pair<int,std::pair<int,int>> jpe = std::make_pair(j,pe);
-			M[i].push_back(jpe);
-		}
-		} //END_IF(i != j)
-	}
-}
+constructM(M , r , tt , sa , lcp , d , E , m , logfile);
+
 /* sort M wrt p */
-for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter = M.begin(); iter != M.end(); iter++) //each vector in M
-{
-	std::sort( (*iter).begin() , (*iter).end() , [ ]( const std::pair<int,std::pair<int,int>> left, std::pair<int,std::pair<int,int>> right )
-	{
-		return ( left.second.first < right.second.first );
-	}
-	);
-}
-/* matrix similar to M to hold unique p values in M, and the sum of their frequencies in current inwodw  */
+sortM(M);
+
+/* matrix similar to M to hold unique p values in M, and the sum of their frequencies in current window  */
+/*
 std::vector<std::map<int,int>> sums;
 sums.reserve(r+1);
 for (int i = 0; i <= r; i++) //each vector in M
@@ -200,7 +188,9 @@ for (int i = 0; i <= r; i++) //each vector in M
 		mymap[ M[i][0].second.first ] = 0;
 		if ( M[i].size() > 1 )
 		{
-			for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[i].begin() + 1; iter != M[i].end(); iter++)
+			for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[i].begin() + 1;
+				iter != M[i].end();
+				iter++)
 			{
 				if ( (*iter).second.first != (*(iter-1)).second.first )
 				{
@@ -212,43 +202,140 @@ for (int i = 0; i <= r; i++) //each vector in M
 		mymap[-1] = -1;
 	}
 	sums.push_back(mymap);	
-}
-logfile << "sums has been initialised" << std::endl;
+}*/
 
-/* print M */
+std::vector<std::vector<int>> pvalues;
+for (int i = 0; i <= r; i++)
+{
+	std::vector<int> v;
+	if ( ! M[i].empty() )
+	{
+		v.push_back(M[i][0].second.first);
+		if ( M[i].size() > 1 )
+		{
+			for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[i].begin() + 1;
+				iter != M[i].end();
+				iter++)
+			{
+				if ( (*iter).second.first != (*(iter-1)).second.first )
+				{
+					v.push_back((*iter).second.first);
+				}
+			}
+		}
+	} else {
+		v.push_back(-1);
+	}
+	pvalues.push_back(v);
+}
+
+logfile << "printing pvalues" << std::endl;
+for (int i = 0; i <= r; i++)
+{
+	logfile << "pvalues[" << i << "] ----- "; 
+	for (std::vector<int>::iterator it = pvalues[i].begin(); it != pvalues[i].end(); it++)
+	{
+		logfile << (*it) << " ";
+	}
+	logfile << std::endl;
+}
+
+/* FOR TESTING ONLY: print M */
 logfile << "printing array M" << std::endl;
 for (int i = 0; i <= r; i++){
 	if (M[i].size() != 0){
 		for (int x = 0; x != M[i].size(); x++){
-			logfile << "i = " << i << " ---" << " j = " << M[i][x].first << " ---" << " p = " << M[i][x].second.first << " ---" << " e = " << M[i][x].second.second << std::endl;
+			logfile
+			<< "i = " << i << " ---"
+			<< " j = " << M[i][x].first << " ---"
+			<< " p = " << M[i][x].second.first << " ---"
+			<< " e = " << M[i][x].second.second
+			<< std::endl;
 		}
 	}
 }
 
 /* initialise parkih vector */
 std::vector<int> parikh(r+1, 0);
+
+/* FOR TESTING ONLY: print parikh vector */
 logfile << "printing parikh vector" << std::endl;
-for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
+for (int i=0; i<parikh.size(); i++)
+{
+logfile << parikh[i] << std::endl;
+}
 
-/* read X */
+/* read T' */
+for (int i = 0; i < n-m+1; i++){
 
-for (int i = 0; i < n-m+1; i++){ //read each letter in string T'
+	/* m-gram */
+	std::string pattern = t.substr(i,3);
+
+	/* FOR TESTING ONLY:  print details */
 	logfile << std::endl << "step " << i << std::endl;
-	std::string pat = t.substr(i,3);
-	logfile << "reading pattern " << pat << std::endl;
+	logfile << "reading pattern " << pattern << std::endl;
 	logfile << "represented by rank " << tt[i] << std::endl;
-	if ( tt[i] != -1) parikh[tt[i]]++; //if new letter is legit, increase its freq in parikh vec
-	if ( ( (i-ll) >= 0 ) && ( tt[i-ll] != -1 ) ) parikh[tt[i-ll]]--; //if old letter was legit & was within text, decrease its freq in parikh vec
+
+	/* shift window */
+	if ( ( (i-ll) >= 0 ) && ( tt[i-ll] != -1 ) ) parikh[tt[i-ll]]--;
+	if ( tt[i] != -1)
+	{
+	parikh[tt[i]]++;
+
+	/* FOR TESTING ONLY: print parikh vector*/
 	logfile << "printing parikh vector" << std::endl;
 	for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
-	if ( parikh[tt[i]] >= k ){ //if this pattern occurs >= k times in current window, report solid clump
-		logfile << "reporting solid clump with pattern " << pat << std::endl;
-		const int p = -1;
-		//logfile << "pattern is " << getPattern( i , p , tt ,  , logfile ) << std::endl; TODO
-	} else { //if not, try to merge to reach k occurrences
+
+	/* try to report something */
+	if ( parikh[tt[i]] >= k ){
+		logfile << "reporting solid clump with pattern " << pattern << std::endl;
+
+	} else { 
 		if ( ! M[tt[i]].empty() )
 		{
 		logfile << "attempting to merge" << std::endl;
+		std::vector<int> P = pvalues[tt[i]]; //TODO not efficient ^ copying
+		std::vector<int> SUM( P.back() , 0);
+		std::vector<std::pair<int,std::pair<int,int>>>::iterator current = M[tt[i]].begin();
+		std::vector<std::pair<int,std::pair<int,int>>>::iterator null =  M[tt[i]].end();
+		while ( current != null ) //(M[tt[i]].end())==NULL
+		{
+			int jj = (*current).first;
+			int pp = (*current).second.first;
+			int ee = (*current).second.second;
+			std::vector<std::pair<int,std::pair<int,int>>>::iterator next = current + 1;
+			SUM[pp] += parikh[jj];
+			if (SUM[pp] >= k)
+			{
+				std::cout << "TODO REPORT DEG CLUMP" << std::endl;
+				if ( ee != (*next).second.second )
+				{
+					current = M[tt[i]].end();
+				}
+			} else if ( pp != (*next).second.first ){
+				if ( (*current).second.second > 1 )
+				{
+					int sum = SUM[(*current).second.first];
+					for ( std::vector<int>::iterator p = P.begin(); p != P.end(); p++ )
+					{
+						if ( (*current).second.first % (*p) == 0 )
+						{
+							sum += SUM[(*p)];
+						}
+					}
+					if ( sum >= k )
+					{
+						std::cout << "TODO REPORT DEG CLUMP" << std::endl;
+						if ( (*current).second.second != (*(current+1)).second.second )
+						{
+							current = M[tt[i]].end();
+						}
+					}
+				}
+			}
+			current++;
+		}
+	/*
 		fillSums(&M[tt[i]], &sums[tt[i]], &parikh, &logfile);
 		
 		logfile << "printing sums in main" << std::endl;
@@ -260,22 +347,30 @@ for (int i = 0; i < n-m+1; i++){ //read each letter in string T'
 				logfile << iter.first << " - " << iter.second << std::endl;
 			}
 		}
-		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &isPrime , &i , &tt , &M[tt[i]] , &t , &m , &logfile);
+		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &isPrime ,
+			&i , &tt , &M[tt[i]] , &t , &m , &logfile);
+	*/
+		
 		} //END_IF( M[t'[i]] is not empty )
-	} //END_IF
+	} //END_IF( parikh[tt[i]] >= k )
+	} //END_IF(( tt[i] != -1))
 } //END_FOR(each letter in X)
 
+/* end program */
 logfile.close();
-
-
-
+const time_t cttt = time(0);
+std::cout << asctime(localtime(&cttt));
 return 0;
 
 } //END_MAIN
-/******************************* FUNCTION DEFINITIONS */
+/***************************
+* FUNCTION DECLARATIONS
+****************************/
 std::string getPattern
 /*
-* function: given a position tpos in T', and (product of) prime(s) p, return degenerate pattern formed by rank at T'[i] and merge-able ranks according to positions represented by p
+* function: given a position tpos in T', and (product of) prime(s) p,
+		return degenerate pattern formed by rank at T'[i] and
+		merge-able ranks according to positions represented by p
 * time complexity: 
 * space complexity:
 */
@@ -345,13 +440,16 @@ for (std::map<int,int>::iterator it = (*sumsi).begin(); it != (*sumsi).end(); it
 		if (( ((*it).second + (*occ)) >= (*k) )){
 			(*logfile) << "reporting LEVEL 1 deg pattern made from???" << std::endl;
 			(*logfile) << (*it).first << " is the p" << std::endl;
-			(*logfile) << "pattern is " << getPattern( (*tpos) , (*it).first , (*tt) , (*Mi) , (*t) , (*m) , (*logfile) ) << std::endl;
+			(*logfile) << "pattern is "
+			<< getPattern( (*tpos) , (*it).first , (*tt) , (*Mi) , (*t) , (*m) , (*logfile) )
+			<< std::endl;
 		}
 	} else { // LEVEL 2 - LEVEL M
 		(*logfile) << "trying LEVEL 2...m merge" << std::endl;
 		int sum = (*occ) + (*it).second;
 		(*logfile) << "sum before adding = " << sum << std::endl; 
-		for (std::map<int,int>::iterator it2 = (*sumsi).begin(); it2 != (*sumsi).end(); it2++)
+		//for (std::map<int,int>::iterator it2 = (*sumsi).begin(); it2 != (*sumsi).end(); it2++)
+		for (std::map<int,int>::iterator it2 = (*sumsi).begin(); it2 != it; it2++)
 		{
 			if ( ( (*it).first!=(*it2).first ) && ( ((*it).first % (*it2).first ))==0 ) sum += (*it2).second;
 		}
@@ -360,7 +458,9 @@ for (std::map<int,int>::iterator it = (*sumsi).begin(); it != (*sumsi).end(); it
 		{
 			(*logfile) << "reporting deg pattern made from???" << std::endl;
 			(*logfile) << (*it).first << " is the p" << std::endl;
-			(*logfile) << "pattern is " << getPattern( (*tpos) , (*it).first , (*tt) , (*Mi) , (*t) , (*m) , (*logfile) ) << std::endl;
+			(*logfile) << "pattern is "
+			<< getPattern( (*tpos) , (*it).first , (*tt) , (*Mi) , (*t) , (*m) , (*logfile) )
+			<< std::endl;
 		}
 	}
 }
@@ -464,3 +564,121 @@ if ( (*M)[(*i)].size() > 1 )
 /////for (int i=0; i<unique.size(); i++) (*logfile) << unique[i] << std::endl;
 return unique;
 } //END_FUNCTION{pvalues}
+void constructT
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+( //PARAMS
+std::vector<int>& tt
+, int& r
+, sdsl::csa_bitcompressed<>& sa
+, int& n
+, int& m
+, sdsl::lcp_bitcompressed<>& lcp
+, int& ll
+) //END_PARAMS
+{ //FUNCTION
+int i = 0;
+do{
+	if ( sa[i] < (n-m+1) ){ //omitting suffixes of length < m
+		int j = i;
+		while ( ( sa[j+1] < (n-m+1) ) && ( lcp[j+1] >= m ) ){ //while (next suffix in SA is longer than m) AND (this suffix and next suffix in SA have lcp > m)
+			j++; //no. of occ of this suffix in tt + i
+		}
+		if ( j-i < ceil(ll/2) ){ //if no. of occ < l'/2
+			r++;
+			for (int k=i; k<=j; k++){ //for each of the identical m-grams
+				tt[sa[k]] = r; //set them to r
+			}
+		}
+		i = j+1; //move to the next unique m-gram
+	} else { //if len of suffix is less than m
+		i++; //skip this suffix
+	}
+} while (i != n+1); //loop through text
+} //END_FUNCTION(constructT)
+void constructM
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+(
+std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M
+, int& r
+, std::vector<int>& tt
+, sdsl::csa_bitcompressed<>& sa
+, sdsl::lcp_bitcompressed<>& lcp
+, int& d
+, std::vector<int>& E
+, int& m
+, std::ofstream& logfile
+)
+{
+for (int i = 0; i <= r; i++)
+{
+	std::vector<std::pair<int,std::pair<int,int>>> vec;
+	M.push_back(vec);
+}
+for (int i = 0; i <= r; i++){
+	for (int j = 0; j <= r; j++){
+		if (i != j){
+		int p = 1;
+		//which suffix does rank i/j represent?
+		std::vector<int>::iterator iter_suffi = std::find(tt.begin(), tt.end(), i);
+		std::vector<int>::iterator iter_suffj = std::find(tt.begin(), tt.end(), j);
+		int suffi = std::distance(tt.begin(),iter_suffi);
+		int suffj = std::distance(tt.begin(),iter_suffj);
+		//where is suffix i/j in the suffix array?
+		sdsl::csa_bitcompressed<>::iterator iter_sai = std::find(sa.begin(), sa.end(), suffi);
+		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
+		int sai = std::distance(sa.begin(),iter_sai);
+		int saj = std::distance(sa.begin(),iter_saj);
+		int match = rmq(&lcp, &sai, &saj, &logfile);
+		int pos = match;
+		int e = 1;
+		p = p * E[pos];
+		while ( (pos < m) && (e <= d) ){
+			suffi = suffi + match + 1;
+			suffj = suffj + match + 1;
+			iter_sai = std::find(sa.begin(), sa.end(), suffi);
+			iter_saj = std::find(sa.begin(), sa.end(), suffj);
+			sai = std::distance(sa.begin(),iter_sai);
+			saj = std::distance(sa.begin(),iter_saj);
+			match = rmq(&lcp, &sai, &saj, &logfile);
+			pos = match + pos + 1;
+			if (pos < m){
+				e++;
+				p = p * E[pos];
+			} //END_IF(pos<m)
+		} //END_WHILE
+		if (e <= d){
+			std::pair<int,int> pe = std::make_pair(p,e);
+			std::pair<int,std::pair<int,int>> jpe = std::make_pair(j,pe);
+			M[i].push_back(jpe);
+		} //END_IF(e <= d)
+		} //END_IF(i != j)
+	}
+}
+} //END_FUNCTION
+void sortM
+/*
+* function: 
+* time complexity: linear
+* space complexity:
+*/
+(
+std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M
+)
+{
+for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter = M.begin(); iter != M.end(); iter++)
+{
+	std::sort( (*iter).begin() , (*iter).end() , [ ]( const std::pair<int,std::pair<int,int>> left, std::pair<int,std::pair<int,int>> right )
+	{
+		return ( left.second.first < right.second.first );
+	}
+	);
+}
+} //END_FUNCTION
