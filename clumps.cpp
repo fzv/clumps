@@ -361,24 +361,21 @@ for (int i = 0; i < n-m+1; i++){
 ***/
 			if ((SUM[current_p]+occ) >= k)
 			{
-				logfile << "TODO REPORT DEG CLUMP" << std::endl;
+				logfile << "TODO REPORT DEG CLUMP with e=1" << std::endl;
 				reported = true;
-				/*
-				if ( current_e != next_e )
-				{
-					current = null;
-				}
-				*/
 			} else if ( (current_p != next_p) && (current_e > 1) ){
+				logfile << "e is more than 1" << std::endl;
 				int sum = SUM[current_p];
+				logfile << "before loop sum is " << sum << std::endl;
 				for ( std::vector<int>::iterator p = P.begin(); p != P.end(); p++ )
 				{
 					if ( current_p % (*p) == 0 )
 					{
+						logfile << "adding " << SUM[(*p)] << " to sum" << std::endl;
 						sum += SUM[(*p)];
 					}
 				}
-				logfile << "sum = " << sum << std::endl;
+				logfile << "after loop sum is " << sum << std::endl;
 				if ( sum >= k )
 				{
 					logfile << "TODO REPORT DEG CLUMP" << std::endl;
