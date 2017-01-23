@@ -295,12 +295,14 @@ for (int i = 0; i < n-m+1; i++){
 
 	} else { 
 		if ( ! M[tt[i]].empty() )
-		{
+		{ //TODO WHAT IF NEXT IS END???
 		logfile << "attempting to merge" << std::endl;
 		std::vector<int> P = pvalues[tt[i]]; //TODO not efficient ^ copying
+		logfile << "p.back = " << P.back() << std::endl;
 		std::vector<int> SUM( P.back() , 0); //size = largest p in row of M
 		std::vector<std::pair<int,std::pair<int,int>>>::iterator current = M[tt[i]].begin();
 		std::vector<std::pair<int,std::pair<int,int>>>::iterator null =  M[tt[i]].end();
+		bool reported = false;
 		while ( current != null ) //(M[tt[i]].end())==NULL
 		{
 			int current_j = (*current).first;
@@ -310,10 +312,19 @@ for (int i = 0; i < n-m+1; i++){
 			int current_e = (*current).second.second;
 			logfile << "current e = " << current_e << std::endl;
 			std::vector<std::pair<int,std::pair<int,int>>>::iterator next = current + 1;
-			//int next_p = (*next).second.first;
-			int next_e = (*next).second.second;
+			int next_p;
+			int next_e;
+			if (next!=null){
+			next_p = (*next).second.first;
+			logfile << "next p = " << next_p << std::endl;
+			next_e = (*next).second.second;
 			logfile << "next e = " << next_e << std::endl;
+			} else {
+			next_p = -10;
+			next_e = -10;
+			}
 			SUM[current_p] += parikh[current_j];
+/***
 			if (current_e==1)
 			{
 			logfile << "current e is 1" << std::endl;
@@ -347,15 +358,17 @@ for (int i = 0; i < n-m+1; i++){
 					}
 				}
 			}
-
-/*
-			if (SUM[current_p] >= k)
+***/
+			if ((SUM[current_p]+occ) >= k)
 			{
-				std::cout << "TODO REPORT DEG CLUMP" << std::endl;
+				logfile << "TODO REPORT DEG CLUMP" << std::endl;
+				reported = true;
+				/*
 				if ( current_e != next_e )
 				{
 					current = null;
 				}
+				*/
 			} else if ( (current_p != next_p) && (current_e > 1) ){
 				int sum = SUM[current_p];
 				for ( std::vector<int>::iterator p = P.begin(); p != P.end(); p++ )
@@ -365,18 +378,28 @@ for (int i = 0; i < n-m+1; i++){
 						sum += SUM[(*p)];
 					}
 				}
+				logfile << "sum = " << sum << std::endl;
 				if ( sum >= k )
 				{
-					std::cout << "TODO REPORT DEG CLUMP" << std::endl;
+					logfile << "TODO REPORT DEG CLUMP" << std::endl;
+					reported = true;
+					/*
 					if ( current_e != next_e )
 					{
 						current = null;
 					}
+					*/
 				}
 			}
-*/
-			current++; // loop through row of M
-		}
+
+			//if (current != null) current++; // loop through row of M
+			if ( (current_e != next_e) && (reported==true))
+			{
+				current = null;
+			} else {
+				current++; //if next is null, current will become null anyway
+			}
+		} //END_WHILE
 
 	/*
 		fillSums(&M[tt[i]], &sums[tt[i]], &parikh, &logfile);
