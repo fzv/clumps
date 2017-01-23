@@ -282,12 +282,15 @@ for (int i = 0; i < n-m+1; i++){
 	{
 	parikh[tt[i]]++;
 
+	int occ = parikh[tt[i]];
+	logfile << "occ is " << occ << std::endl;
+
 	/* FOR TESTING ONLY: print parikh vector*/
 	logfile << "printing parikh vector" << std::endl;
 	for (int i=0; i<parikh.size(); i++) logfile << parikh[i] << std::endl;
 
 	/* try to report something */
-	if ( parikh[tt[i]] >= k ){
+	if ( occ >= k ){
 		logfile << "reporting solid clump with pattern " << pattern << std::endl;
 
 	} else { 
@@ -295,46 +298,86 @@ for (int i = 0; i < n-m+1; i++){
 		{
 		logfile << "attempting to merge" << std::endl;
 		std::vector<int> P = pvalues[tt[i]]; //TODO not efficient ^ copying
-		std::vector<int> SUM( P.back() , 0);
+		std::vector<int> SUM( P.back() , 0); //size = largest p in row of M
 		std::vector<std::pair<int,std::pair<int,int>>>::iterator current = M[tt[i]].begin();
 		std::vector<std::pair<int,std::pair<int,int>>>::iterator null =  M[tt[i]].end();
 		while ( current != null ) //(M[tt[i]].end())==NULL
 		{
-			int jj = (*current).first;
-			int pp = (*current).second.first;
-			int ee = (*current).second.second;
+			int current_j = (*current).first;
+			logfile << "current j = " << current_j << std::endl;
+			int current_p = (*current).second.first;
+			logfile << "current p = " << current_p << std::endl;
+			int current_e = (*current).second.second;
+			logfile << "current e = " << current_e << std::endl;
 			std::vector<std::pair<int,std::pair<int,int>>>::iterator next = current + 1;
-			SUM[pp] += parikh[jj];
-			if (SUM[pp] >= k)
+			//int next_p = (*next).second.first;
+			int next_e = (*next).second.second;
+			logfile << "next e = " << next_e << std::endl;
+			SUM[current_p] += parikh[current_j];
+			if (current_e==1)
 			{
-				std::cout << "TODO REPORT DEG CLUMP" << std::endl;
-				if ( ee != (*next).second.second )
-				{
-					current = M[tt[i]].end();
-				}
-			} else if ( pp != (*next).second.first ){
-				if ( (*current).second.second > 1 )
-				{
-					int sum = SUM[(*current).second.first];
-					for ( std::vector<int>::iterator p = P.begin(); p != P.end(); p++ )
+			logfile << "current e is 1" << std::endl;
+			logfile << "trying to reach k with " << (SUM[current_p]+occ) << std::endl;
+				if ( (SUM[current_p]+occ) >= k ){
+					std::cout << "TODO REPORT DEG CLUMP" << std::endl;
+					if ( current_e != next_e )
 					{
-						if ( (*current).second.first % (*p) == 0 )
-						{
-							sum += SUM[(*p)];
-						}
-					}
-					if ( sum >= k )
-					{
-						std::cout << "TODO REPORT DEG CLUMP" << std::endl;
-						if ( (*current).second.second != (*(current+1)).second.second )
-						{
-							current = M[tt[i]].end();
-						}
+						logfile << "setting pointer to null" << std::endl;
+						current = null;
 					}
 				}
 			}
-			current++;
+			else
+			{
+				logfile << "e > 1" << std::endl;
+				int sum = SUM[current_p];
+				for ( std::vector<int>::iterator p = P.begin(); p != P.end(); p++ )
+				{
+					if ( (current_p % (*p)) == 0 )
+					{
+						sum += SUM[(*p)];
+					}
+				}
+				if ( (sum+occ) >= k )
+				{
+					std::cout << "TODO REPORT DEG CLUMP" << std::endl;
+					if ( current_e != next_e )
+					{
+						current = null;
+					}
+				}
+			}
+
+/*
+			if (SUM[current_p] >= k)
+			{
+				std::cout << "TODO REPORT DEG CLUMP" << std::endl;
+				if ( current_e != next_e )
+				{
+					current = null;
+				}
+			} else if ( (current_p != next_p) && (current_e > 1) ){
+				int sum = SUM[current_p];
+				for ( std::vector<int>::iterator p = P.begin(); p != P.end(); p++ )
+				{
+					if ( current_p % (*p) == 0 )
+					{
+						sum += SUM[(*p)];
+					}
+				}
+				if ( sum >= k )
+				{
+					std::cout << "TODO REPORT DEG CLUMP" << std::endl;
+					if ( current_e != next_e )
+					{
+						current = null;
+					}
+				}
+			}
+*/
+			current++; // loop through row of M
 		}
+
 	/*
 		fillSums(&M[tt[i]], &sums[tt[i]], &parikh, &logfile);
 		
