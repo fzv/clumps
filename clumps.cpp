@@ -299,7 +299,9 @@ for (int i = 0; i < n-m+1; i++){
 		logfile << "attempting to merge" << std::endl;
 		std::vector<int> P = pvalues[tt[i]]; //TODO not efficient ^ copying
 		logfile << "p.back = " << P.back() << std::endl;
-		std::vector<int> SUM( P.back() , 0); //size = largest p in row of M
+		std::vector<int> SUM( P.back()+1 , 0); //size = largest p in row of M
+		logfile << "printing sum vector after initialisation" << std::endl;
+		for (int i = 0; i != SUM.size(); i++) logfile << SUM[i] << std::endl; 
 		std::vector<std::pair<int,std::pair<int,int>>>::iterator current = M[tt[i]].begin();
 		std::vector<std::pair<int,std::pair<int,int>>>::iterator null =  M[tt[i]].end();
 		bool reported = false;
@@ -324,6 +326,8 @@ for (int i = 0; i < n-m+1; i++){
 			next_e = -10;
 			}
 			SUM[current_p] += parikh[current_j];
+			logfile << "printing sum vector after updating inside while loop" << std::endl;
+			for (int i = 0; i != SUM.size(); i++) logfile << SUM[i] << std::endl; 
 /***
 			if (current_e==1)
 			{
@@ -359,10 +363,14 @@ for (int i = 0; i < n-m+1; i++){
 				}
 			}
 ***/
-			if ((SUM[current_p]+occ) >= k)
+			if (current_e==1)
 			{
+				logfile << "(SUM[current_p]+occ) = " << (SUM[current_p]+occ) << std::endl;
+				if ((SUM[current_p]+occ) >= k)
+				{
 				logfile << "TODO REPORT DEG CLUMP with e=1" << std::endl;
 				reported = true;
+				}
 			} else if ( (current_p != next_p) && (current_e > 1) ){
 				logfile << "e is more than 1" << std::endl;
 				int sum = SUM[current_p];
@@ -392,8 +400,10 @@ for (int i = 0; i < n-m+1; i++){
 			//if (current != null) current++; // loop through row of M
 			if ( (current_e != next_e) && (reported==true))
 			{
+				logfile << "setting current to null" << std::endl;
 				current = null;
 			} else {
+				logfile << "incrementing current pointer" << std::endl;
 				current++; //if next is null, current will become null anyway
 			}
 		} //END_WHILE
