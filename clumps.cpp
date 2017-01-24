@@ -39,20 +39,15 @@ int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
 std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M,
 int *i, std::ofstream *logfile);
 bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
-void fillSums(std::vector<std::pair<int,std::pair<int,int>>> *Mi, std::map<int,int> *sumsi,
-std::vector<int> *parikh, std::ofstream *logfile);
-void checkSums(int *occ,std::map<int,int> *sumsi,int *k,std::vector<int> *E,
-std::vector<bool> *isPrime,int *tpos,std::vector<int> *tt,
-std::vector<std::pair<int,std::pair<int,int>>> *Mi,std::string *t,int *m,std::ofstream *logfile);
-std::string getPattern(int &tpos,const int &p,std::vector<int>& tt,std::string& t,int& m,
-std::ofstream &logfile);
+std::string getPattern(int& i, int& p, std::vector<int>& tt, std::vector<std::pair<int,std::pair<int,int>>>& Mi
+, std::string& t, int& m, std::ofstream& logfile);
 void constructT(std::vector<int>& tt , int& r , sdsl::csa_bitcompressed<>& sa, int& n , int& m ,
 sdsl::lcp_bitcompressed<>& lcp , int& ll);
 void constructM(std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M , int& r ,
 std::vector<int>& tt , sdsl::csa_bitcompressed<>& sa , sdsl::lcp_bitcompressed<>& lcp , int& d ,
-std::vector<int>& E
-, int& m , std::ofstream& logfile);
+std::vector<int>& E, int& m , std::ofstream& logfile);
 void sortM(std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M);
+std::vector<std::vector<int>> getPValues( int& r , std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M );
 
 /**********************
 * MAIN FUNCTION
@@ -65,7 +60,7 @@ int main(int argc, char* argv[])
 const time_t ctt = time(0);
 std::cout << asctime(localtime(&ctt));
 
-/* Begin logging */
+/* begin logging */
 
 std::ofstream logfile; 
 logfile.open("clumps.log");
@@ -115,7 +110,7 @@ for (sdsl::csa_bitcompressed<>::iterator iter = sa.begin(); iter != sa.end(); it
 {
 logfile << (*iter) << " ";
 }
- logfile << std::endl;
+logfile << std::endl;
 
 /* constuct longest common prefix array of t */
 sdsl::lcp_bitcompressed<> lcp;
@@ -147,27 +142,6 @@ for (int i=0; i<E.size(); i++)
 logfile << E[i] << " "; logfile << std::endl;
 }
 
-/* compute largest possible p value (pmax) */
-int product = 1;
-for (int i=0; i<E.size(); i++)
-{
-product = product * E[i];
-}
-
-/* FOR TESTING ONLY: print pmax */
-logfile << "product of all m prime numbers in E = " << product << std::endl;
-
-/* construct isPrime */
-std::vector<bool> isPrime( product+1 , false );
-for (int i=0; i<E.size(); i++) isPrime[E[i]] = true;
-
-/* FOR TESTING ONLY: print isPrime */
-logfile << "printing isPrime" << std::endl;
-for (int i=0; i<isPrime.size(); i++)
-{
-logfile << i << ": " << isPrime[i] << std::endl;
-}
-
 /* construction of array M */
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> M;
 M.reserve(r);
@@ -176,59 +150,10 @@ constructM(M , r , tt , sa , lcp , d , E , m , logfile);
 /* sort M wrt p */
 sortM(M);
 
-/* matrix similar to M to hold unique p values in M, and the sum of their frequencies in current window  */
-/*
-std::vector<std::map<int,int>> sums;
-sums.reserve(r+1);
-for (int i = 0; i <= r; i++) //each vector in M
-{
-	std::map<int,int> mymap;
-	if ( ! M[i].empty() )
-	{
-		mymap[ M[i][0].second.first ] = 0;
-		if ( M[i].size() > 1 )
-		{
-			for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[i].begin() + 1;
-				iter != M[i].end();
-				iter++)
-			{
-				if ( (*iter).second.first != (*(iter-1)).second.first )
-				{
-					mymap[ (*iter).second.first ] = 0;
-				}
-			}
-		}
-	} else {
-		mymap[-1] = -1;
-	}
-	sums.push_back(mymap);	
-}*/
+/* get unique p values in each array in M*/
+std::vector<std::vector<int>> pvalues = getPValues(r , M);
 
-std::vector<std::vector<int>> pvalues;
-for (int i = 0; i <= r; i++)
-{
-	std::vector<int> v;
-	if ( ! M[i].empty() )
-	{
-		v.push_back(M[i][0].second.first);
-		if ( M[i].size() > 1 )
-		{
-			for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[i].begin() + 1;
-				iter != M[i].end();
-				iter++)
-			{
-				if ( (*iter).second.first != (*(iter-1)).second.first )
-				{
-					v.push_back((*iter).second.first);
-				}
-			}
-		}
-	} else {
-		v.push_back(-1);
-	}
-	pvalues.push_back(v);
-}
-
+/* FOR TESTING ONLY: print pValues */
 logfile << "printing pvalues" << std::endl;
 for (int i = 0; i <= r; i++)
 {
@@ -292,7 +217,6 @@ for (int i = 0; i < n-m+1; i++){
 	/* try to report something */
 	if ( occ >= k ){
 		logfile << "reporting solid clump with pattern " << pattern << std::endl;
-
 	} else { 
 		if ( ! M[tt[i]].empty() )
 		{ //TODO WHAT IF NEXT IS END???
@@ -328,48 +252,15 @@ for (int i = 0; i < n-m+1; i++){
 			SUM[current_p] += parikh[current_j];
 			logfile << "printing sum vector after updating inside while loop" << std::endl;
 			for (int i = 0; i != SUM.size(); i++) logfile << SUM[i] << std::endl; 
-/***
-			if (current_e==1)
-			{
-			logfile << "current e is 1" << std::endl;
-			logfile << "trying to reach k with " << (SUM[current_p]+occ) << std::endl;
-				if ( (SUM[current_p]+occ) >= k ){
-					std::cout << "TODO REPORT DEG CLUMP" << std::endl;
-					if ( current_e != next_e )
-					{
-						logfile << "setting pointer to null" << std::endl;
-						current = null;
-					}
-				}
-			}
-			else
-			{
-				logfile << "e > 1" << std::endl;
-				int sum = SUM[current_p];
-				for ( std::vector<int>::iterator p = P.begin(); p != P.end(); p++ )
-				{
-					if ( (current_p % (*p)) == 0 )
-					{
-						sum += SUM[(*p)];
-					}
-				}
-				if ( (sum+occ) >= k )
-				{
-					std::cout << "TODO REPORT DEG CLUMP" << std::endl;
-					if ( current_e != next_e )
-					{
-						current = null;
-					}
-				}
-			}
-***/
 			if (current_e==1)
 			{
 				logfile << "(SUM[current_p]+occ) = " << (SUM[current_p]+occ) << std::endl;
 				if ((SUM[current_p]+occ) >= k)
 				{
-				logfile << "TODO REPORT DEG CLUMP with e=1" << std::endl;
-				reported = true;
+					logfile << "pattern reported"
+					<< getPattern(i, current_p, tt, M[tt[i]], t, m, logfile)
+					<< std::endl;
+					reported = true;
 				}
 			} else if ( (current_p != next_p) && (current_e > 1) ){
 				logfile << "e is more than 1" << std::endl;
@@ -386,18 +277,12 @@ for (int i = 0; i < n-m+1; i++){
 				logfile << "after loop sum is " << sum << std::endl;
 				if ( sum >= k )
 				{
-					logfile << "TODO REPORT DEG CLUMP" << std::endl;
+					logfile << "pattern reported"
+					<< getPattern(i, current_p, tt, M[tt[i]], t, m, logfile)
+					<< std::endl;
 					reported = true;
-					/*
-					if ( current_e != next_e )
-					{
-						current = null;
-					}
-					*/
 				}
 			}
-
-			//if (current != null) current++; // loop through row of M
 			if ( (current_e != next_e) && (reported==true))
 			{
 				logfile << "setting current to null" << std::endl;
@@ -407,23 +292,6 @@ for (int i = 0; i < n-m+1; i++){
 				current++; //if next is null, current will become null anyway
 			}
 		} //END_WHILE
-
-	/*
-		fillSums(&M[tt[i]], &sums[tt[i]], &parikh, &logfile);
-		
-		logfile << "printing sums in main" << std::endl;
-		for (int i = 0; i <= r; i++) //each map in sums
-		{
-			logfile << "i = " << i << std::endl;
-			for (auto const& iter : sums[i])
-			{
-				logfile << iter.first << " - " << iter.second << std::endl;
-			}
-		}
-		checkSums( &parikh[tt[i]] , &sums[tt[i]] , &k , &E , &isPrime ,
-			&i , &tt , &M[tt[i]] , &t , &m , &logfile);
-	*/
-		
 		} //END_IF( M[t'[i]] is not empty )
 	} //END_IF( parikh[tt[i]] >= k )
 	} //END_IF(( tt[i] != -1))
@@ -449,12 +317,12 @@ std::string getPattern
 */
 ( //PARAMS
   int& i //position in T'
-, const int& p
+, int& p
 , std::vector<int>& tt
 , std::vector<std::pair<int,std::pair<int,int>>>& Mi
 , std::string& t
 , int& m
-, std::ofstream &logfile
+, std::ofstream& logfile
 ) //END_PARAMS
 { //FUNCTION
 logfile << "--------------------------------------------------------------" << std::endl;
@@ -483,83 +351,6 @@ pattern.pop_back();
 logfile << "--------------------------------------------------------------" << std::endl;
 return pattern;
 } //END_FUNCTION(getPattern)
-void checkSums
-/*
-* function: 
-* time complexity: 
-* space complexity:
-*/
-( //PARAMS
-  int *occ
-, std::map<int,int> *sumsi
-, int *k
-, std::vector<int> *E
-, std::vector<bool> *isPrime
-, int *tpos
-, std::vector<int> *tt
-, std::vector<std::pair<int,std::pair<int,int>>> *Mi
-, std::string *t
-, int *m
-, std::ofstream *logfile
-) //END_PARAMS
-{ //FUNCTION
-(*logfile) << "inside checkSums()" << std::endl;
-for (std::map<int,int>::iterator it = (*sumsi).begin(); it != (*sumsi).end(); it++)
-{
-	(*logfile) << (*it).first << " is the p we are looking at currently............" << std::endl;
-	if  ( ( (*isPrime)[ (*it).first ] == true ) )
-	{// LEVEL 1
-		(*logfile) << "trying LEVEL 1 merge" << std::endl;
-		if (( ((*it).second + (*occ)) >= (*k) )){
-			(*logfile) << "reporting LEVEL 1 deg pattern made from???" << std::endl;
-			(*logfile) << (*it).first << " is the p" << std::endl;
-			(*logfile) << "pattern is "
-			<< getPattern( (*tpos) , (*it).first , (*tt) , (*Mi) , (*t) , (*m) , (*logfile) )
-			<< std::endl;
-		}
-	} else { // LEVEL 2 - LEVEL M
-		(*logfile) << "trying LEVEL 2...m merge" << std::endl;
-		int sum = (*occ) + (*it).second;
-		(*logfile) << "sum before adding = " << sum << std::endl; 
-		//for (std::map<int,int>::iterator it2 = (*sumsi).begin(); it2 != (*sumsi).end(); it2++)
-		for (std::map<int,int>::iterator it2 = (*sumsi).begin(); it2 != it; it2++)
-		{
-			if ( ( (*it).first!=(*it2).first ) && ( ((*it).first % (*it2).first ))==0 ) sum += (*it2).second;
-		}
-		(*logfile) << "sum after adding = " << sum << std::endl; 
-		if (sum >= (*k))
-		{
-			(*logfile) << "reporting deg pattern made from???" << std::endl;
-			(*logfile) << (*it).first << " is the p" << std::endl;
-			(*logfile) << "pattern is "
-			<< getPattern( (*tpos) , (*it).first , (*tt) , (*Mi) , (*t) , (*m) , (*logfile) )
-			<< std::endl;
-		}
-	}
-}
-} //END_FUNCTION
-void fillSums
-/*
-* function:
-* time complexity: 
-* space complexity:
-*/
-( //PARAMS
-  std::vector<std::pair<int,std::pair<int,int>>> *Mi
-, std::map<int,int> *sumsi
-, std::vector<int> *parikh
-, std::ofstream *logfile
-) //END_PARAMS
-{ //FUNCTION
-for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = (*Mi).begin();
-	iter != (*Mi).end();
-	iter++)
-{
-	//(*logfile) << (*sumsi)[ ( (*iter).second.first ) ] << std::endl;
-	(*sumsi)[ (*iter).second.first ] += (*parikh)[ (*iter).first ];
-}
-} //END_FUNCTION(fillSums)
-
 bool compare
 /*
 * function: 
@@ -573,14 +364,12 @@ bool compare
 { //FUNCTION
 return ( left.second.first < right.second.first );
 } //END_FUNCTION{compare}
-
 /*
 http://stackoverflow.com/questions/279854/how-do-i-sort-a-vector-of-pairs-based-on-the-second-element-of-the-pair
 std::sort(v.begin(), v.end(), [](const std::pair<int,int> &left, const std::pair<int,int> &right) {
     return left.second < right.second;
 });
 */
-
 int rmq
 /*
 * function: naive range minimum query TODO implement non naive
@@ -755,3 +544,40 @@ for (std::vector<std::vector<std::pair<int,std::pair<int,int>>>>::iterator iter 
 	);
 }
 } //END_FUNCTION
+std::vector<std::vector<int>> getPValues
+/*
+* function: 
+* time complexity: 
+* space complexity:
+*/
+(
+  int& r
+, std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M
+)
+{
+std::vector<std::vector<int>> pvalues;
+for (int i = 0; i <= r; i++)
+{
+	std::vector<int> v;
+	if ( ! M[i].empty() )
+	{
+		v.push_back(M[i][0].second.first);
+		if ( M[i].size() > 1 )
+		{
+			for (std::vector<std::pair<int,std::pair<int,int>>>::iterator iter = M[i].begin() + 1;
+				iter != M[i].end();
+				iter++)
+			{
+				if ( (*iter).second.first != (*(iter-1)).second.first )
+				{
+					v.push_back((*iter).second.first);
+				}
+			}
+		}
+	} else {
+		v.push_back(-1);
+	}
+	pvalues.push_back(v);
+}
+return pvalues;
+}
