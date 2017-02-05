@@ -35,19 +35,39 @@
 /**********************
 * FUNCTION DECLARATIONS
 ***********************/
-int rmq(sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
+int rmq
+(
+sdsl::lcp_bitcompressed<> *lcp, int *x, int *y, std::ofstream *logfile);
 std::vector<int> pvalues(std::vector<std::vector<std::pair<int,std::pair<int,int>>>> *M,
-int *i, std::ofstream *logfile);
-bool compare(std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right);
-std::string getPattern(int& i, int& p, std::vector<int>& tt, std::vector<std::pair<int,std::pair<int,int>>>& Mi
-, std::string& t, int& m, std::ofstream& logfile);
-void constructT(std::vector<int>& tt , int& r , sdsl::csa_bitcompressed<>& sa, int& n , int& m ,
-sdsl::lcp_bitcompressed<>& lcp , int& ll);
-void constructM(std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M , int& r ,
+int *i, std::ofstream *logfile
+);
+bool compare
+(
+std::pair<int,std::pair<int,int>> *left, std::pair<int,std::pair<int,int>> *right
+);
+std::string getPattern
+(
+int& i, int& p, std::vector<int>& tt, std::vector<std::pair<int,std::pair<int,int>>>& Mi
+, std::string& t, int& m, std::vector<int>& parikh ,std::ofstream& logfile
+);
+void constructT
+(
+std::vector<int>& tt , int& r , sdsl::csa_bitcompressed<>& sa, int& n , int& m ,
+sdsl::lcp_bitcompressed<>& lcp , int& ll
+);
+void constructM
+(
+std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M , int& r ,
 std::vector<int>& tt , sdsl::csa_bitcompressed<>& sa , sdsl::lcp_bitcompressed<>& lcp , int& d ,
-std::vector<int>& E, int& m , std::ofstream& logfile);
-void sortM(std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M);
-std::vector<std::vector<int>> getPValues( int& r , std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M );
+std::vector<int>& E, int& m , std::ofstream& logfile
+);
+void sortM(
+std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M
+);
+std::vector<std::vector<int>> getPValues
+(
+int& r , std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M
+);
 
 /**********************
 * MAIN FUNCTION
@@ -219,17 +239,17 @@ for (int i = 0; i < n-m+1; i++){
 		logfile << "reporting solid clump with pattern " << pattern << std::endl;
 	} else { 
 		if ( ! M[tt[i]].empty() )
-		{ //TODO WHAT IF NEXT IS END???
+		{
 		logfile << "attempting to merge" << std::endl;
 		std::vector<int> P = pvalues[tt[i]]; //TODO not efficient ^ copying
 		logfile << "p.back = " << P.back() << std::endl;
-		std::vector<int> SUM( P.back()+1 , 0); //size = largest p in row of M
+		std::vector<int> SUM( P.back()+1 , 0);
 		logfile << "printing sum vector after initialisation" << std::endl;
 		for (int i = 0; i != SUM.size(); i++) logfile << SUM[i] << std::endl; 
 		std::vector<std::pair<int,std::pair<int,int>>>::iterator current = M[tt[i]].begin();
 		std::vector<std::pair<int,std::pair<int,int>>>::iterator null =  M[tt[i]].end();
 		bool reported = false;
-		while ( current != null ) //(M[tt[i]].end())==NULL
+		while ( current != null )
 		{
 			int current_j = (*current).first;
 			logfile << "current j = " << current_j << std::endl;
@@ -257,8 +277,8 @@ for (int i = 0; i < n-m+1; i++){
 				logfile << "(SUM[current_p]+occ) = " << (SUM[current_p]+occ) << std::endl;
 				if ((SUM[current_p]+occ) >= k)
 				{
-					logfile << "pattern reported"
-					<< getPattern(i, current_p, tt, M[tt[i]], t, m, logfile)
+					logfile << "pattern reported "
+					<< getPattern(i, current_p, tt, M[tt[i]], t, m, parikh, logfile)
 					<< std::endl;
 					reported = true;
 				}
@@ -277,8 +297,8 @@ for (int i = 0; i < n-m+1; i++){
 				logfile << "after loop sum is " << sum << std::endl;
 				if ( sum >= k )
 				{
-					logfile << "pattern reported"
-					<< getPattern(i, current_p, tt, M[tt[i]], t, m, logfile)
+					logfile << "pattern reported "
+					<< getPattern(i, current_p, tt, M[tt[i]], t, m, parikh, logfile)
 					<< std::endl;
 					reported = true;
 				}
@@ -289,7 +309,7 @@ for (int i = 0; i < n-m+1; i++){
 				current = null;
 			} else {
 				logfile << "incrementing current pointer" << std::endl;
-				current++; //if next is null, current will become null anyway
+				current++;
 			}
 		} //END_WHILE
 		} //END_IF( M[t'[i]] is not empty )
@@ -322,6 +342,7 @@ std::string getPattern
 , std::vector<std::pair<int,std::pair<int,int>>>& Mi
 , std::string& t
 , int& m
+, std::vector<int>& parikh
 , std::ofstream& logfile
 ) //END_PARAMS
 { //FUNCTION
@@ -334,7 +355,7 @@ ranks.push_back(tt[i]);
 logfile << "current letter in T' is " << tt[i] << std::endl;
 for (std::vector<std::pair<int,std::pair<int,int>>>::iterator it = Mi.begin(); it != Mi.end(); it++)
 {
-	if ( (*it).second.first == p ) ranks.push_back( (*it).first );
+	if ( ((*it).second.first == p) && (parikh[(*it).first] != 0) ) ranks.push_back( (*it).first );
 }
 std::stringstream patterns;
 for (std::vector<int>::iterator it = ranks.begin(); it != ranks.end(); it++)
