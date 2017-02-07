@@ -1,0 +1,11 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <iterator>
+#include <ctime>
+#include "sdsl/suffix_arrays.hpp"
+#include "sdsl/lcp.hpp"
+#include "clumps.h"
