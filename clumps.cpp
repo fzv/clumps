@@ -119,7 +119,7 @@ for (int i = 0; i < n-m+1; i++)
 {
 	//TODO: i is pos for computer scientist, not for biologist!
 	/* m-gram */
-	std::string pattern = t.substr(i,3);
+	std::string pattern = t.substr(i,m);
 
 	/* FOR TESTING ONLY:  print details */
 	logfile << std::endl << "step " << i << std::endl;
@@ -241,7 +241,6 @@ for (int i = 0; i < n-m+1; i++)
 
 
 /* end program */
-logfile.close();
 const time_t END = time(0);
 std::cout << asctime(localtime(&END));
 } //END_CLUMPS

@@ -6,6 +6,6 @@ d	number of degenerate symbols allowed	1
 k	number of occurrences	2
 #
 l	length of window	7
-m	length of pattern	3
+m	length of pattern	4
 d	number of degenerate symbols allowed	1
-k	number of occurrences	2
+k	number of occurrences	1

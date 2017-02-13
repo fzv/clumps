@@ -9,6 +9,7 @@
 #include "sdsl/suffix_arrays.hpp"
 #include "sdsl/lcp.hpp"
 #include "clumps.h"
+#include <map>
 
 int main()
 {
@@ -20,10 +21,68 @@ logfile << "LOG" << std::endl;
 
 //read clumps.in
 std::ifstream clumpsFile("clumps.in");
+std::vector<std::vector<std::string>> lines;
 std::string line;
+if (clumpsFile.is_open())
+{
+	if (clumpsFile.good())
+	{
+		while (getline(clumpsFile, line, '\n'))
+		{
+			std::vector<std::string> linevec;
+			std::stringstream ss(line);
+			std::string item;
+			while( getline(ss, item, '\t') )
+			{
+				linevec.push_back(item);
+			}
+			lines.push_back(linevec);
+		}
+	}
+	clumpsFile.close();
+}
+else
+{
+	logfile << "Unable to open clumps.in" << std::endl;
+}
+
+/* declare params */
+std::string textfile;
+std::vector<int> L;
+std::vector<int> M;
+std::vector<int> D;
+std::vector<int> K;
+int runs = 0;
+
+for (int item = 0; item != lines.size(); item++)
+{
+	if (lines[item][0] == "t")
+	{
+		textfile = lines[item][2];
+	}
+	else if (lines[item][0] == "#")
+	{
+		runs++;
+	}
+	else if (lines[item][0] == "l")
+	{
+		L.push_back( std::stoi( lines[item][2] ) );
+	}
+	else if (lines[item][0] == "m")
+	{
+		M.push_back( std::stoi( lines[item][2] ) );
+	}
+	else if (lines[item][0] == "d")
+	{
+		D.push_back( std::stoi( lines[item][2] ) );
+	}
+	else if (lines[item][0] == "k")
+	{
+		K.push_back( std::stoi( lines[item][2] ) );
+	}
+}
 
 /* parse text */
-std::string textfile = "paper.fas"; //TODO
 std::ifstream tFile(textfile);
 std::string tline;
 std::stringstream tstream;
@@ -40,7 +99,7 @@ if (tFile.is_open())
 }
 else
 {
-	logfile << "Unable to open file." << std::endl;
+	logfile << "Unable to open text file." << std::endl;
 }
 std::string t = tstream.str();
 int n = t.length();
@@ -50,22 +109,87 @@ logfile << std::endl << "printing text" << std::endl;
 logfile << t << std::endl;
 logfile << std::endl << "n = " << n << std::endl;
 
-/* parse input params */
-//TODO
-int l = 7;
-int m = 3;
-int ll = l-m+1;
-int d = 1;
-int k = 2;
+std::vector<std::vector<std::pair<int,std::string>>> results;
+for (int run = 0; run != runs; run++)
+{
+	//std::cout << "run # " << run << std::endl;
+	logfile << "run # " << run << std::endl;
+	std::vector<std::pair<int,std::string>> result;
+	int l = L[run];
+	int m = M[run];
+	int ll = l-m+1;
+	int d = D[run];
+	int k = K[run];
 
-/* TESTING ONLY: print some params */
-logfile << "l'= " << ll << std::endl;
-logfile << "l/2= " << ceil(ll/2) << std::endl;
+	/* TESTING ONLY: print some params */
+	logfile << "l'= " << ll << std::endl;
+	logfile << "l/2= " << ceil(ll/2) << std::endl;
+	logfile << "m= " << m << std::endl;
+	logfile << "d= " << d << std::endl;
+	logfile << "k= " << k << std::endl;
 
-//run clumps with each batch + add i's to vector
-clumps(logfile,t,n,m,ll,d,k);
+	//run clumps with each batch + add i's to vector
+	clumps(logfile,t,n,m,ll,d,k,result);
+	results.push_back(result);
+}
+
+
 
 //reports i's if occur in all vectors
+std::map<int,int> report;
+//std::cout << "run 0" << std::endl;
+for(int item = 0; item != results[0].size(); item++)
+{
+	//std::cout << "i = " << results[0][item].first << std::endl;
+	//std::cout << "p = " << results[0][item].second << std::endl;
+	report[ results[0][item].first ] = 1;
+}
 
+for(int run = 1; run != runs; run++)
+{
+//std::cout << "run " << run << std::endl;
+	for(int item = 0; item != results[run].size(); item++)
+	{
+		//std::cout << "i = " << results[run][item].first << std::endl;
+		//std::cout << "p = " << results[run][item].second << std::endl;
+		if( report.count( results[run][item].first ) > 0)
+		{
+			report[results[run][item].first]++;
+		}
+		else
+		{
+			report[results[run][item].first] = 1;
+		}
+	}
+}
+
+//print map
+
+std::map<int,int>::iterator pos;
+/*
+for (pos = report.begin(); pos != report.end(); ++pos) {
+	std::cout << "i: \"" << pos->first << "\" "
+		<< "times reported: " << pos->second << std::endl;
+}
+*/
+
+//report if counter == runs
+for (pos = report.begin(); pos != report.end(); ++pos) {
+	if (pos->second == runs)
+	{
+		std::cout << "reporting i = " << pos->first << std::endl;
+		std::cout << "with patterns" << std::endl;
+		for(int run = 0; run != runs; run++)
+		{
+			for(int item = 0; item != results[run].size(); item++)
+			{
+				if(results[run][item].first == pos->first) std::cout << results[run][item].second << std::endl;
+			}
+		}
+	}
+}
+
+/* end logging */
+logfile.close();
 return 0;
 }
