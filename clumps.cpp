@@ -9,8 +9,9 @@
 #include "sdsl/suffix_arrays.hpp"
 #include "sdsl/lcp.hpp"
 #include "clumps.h"
+#include <map>
 
-void clumps(std::ofstream& logfile, std::string& t,int& n, int& m, int& ll, int& d, int& k)
+void clumps(std::ofstream& logfile, std::string& t,int& n, int& m, int& ll, int& d, int& k, std::vector<std::pair<int,std::string>>& result)
 {
 
 /* print time */
@@ -110,9 +111,13 @@ for (int i=0; i<parikh.size(); i++)
 	logfile << parikh[i] << std::endl;
 }
 
+/* prepare to report */
+std::pair<int,std::string> window_result;
+
 /* read T' */
 for (int i = 0; i < n-m+1; i++)
 {
+	//TODO: i is pos for computer scientist, not for biologist!
 	/* m-gram */
 	std::string pattern = t.substr(i,3);
 
@@ -138,6 +143,9 @@ for (int i = 0; i < n-m+1; i++)
 		if ( occ >= k )
 		{
 			logfile << "reporting solid clump with pattern " << pattern << std::endl;
+			//ivec.push_back(i); pvec.push_back(pattern);
+			window_result = std::make_pair(i,pattern);
+			result.push_back(window_result);
 		}
 		else
 		{ 
@@ -186,6 +194,9 @@ for (int i = 0; i < n-m+1; i++)
 							logfile << "pattern reported "
 							<< getPattern(i, current_p, tt, M[tt[i]], t, m, parikh, logfile)
 							<< std::endl;
+							//ivec.push_back(i); pvec.push_back(getPattern(i, current_p, tt, M[tt[i]], t, m, parikh, logfile));
+							window_result = std::make_pair(i,getPattern(i, current_p, tt, M[tt[i]], t, m, parikh, logfile));
+							result.push_back(window_result);
 							reported = true;
 						} //END_IF
 					}
@@ -208,6 +219,9 @@ for (int i = 0; i < n-m+1; i++)
 							logfile << "pattern reported "
 							<< getPattern(i, current_p, tt, M[tt[i]], t, m, parikh, logfile)
 							<< std::endl;
+							//ivec.push_back(i); pvec.push_back(getPattern(i, current_p, tt, M[tt[i]], t, m, parikh, logfile));
+							window_result = std::make_pair(i,getPattern(i, current_p, tt, M[tt[i]], t, m, parikh, logfile));
+							result.push_back(window_result);
 							reported = true;
 						} //END_IF( sum >= k )
 					} //END_ELSEIF( (current_p != next_p) && (current_e > 1) )
@@ -224,6 +238,7 @@ for (int i = 0; i < n-m+1; i++)
 		} //END_IF( parikh[tt[i]] >= k )
 		} //END_IF(( tt[i] != -1))
 } //END_FOR(each letter in X)
+
 
 /* end program */
 logfile.close();

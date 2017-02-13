@@ -39,13 +39,17 @@
 /*
 * 
 */
+#include <map>
+/*
+* 
+*/
 
 /**********************
 * FUNCTION DECLARATIONS
 ***********************/
 void clumps
 (
-std::ofstream& logfile, std::string& t,int& n, int& m, int& ll, int& d, int& k
+std::ofstream& logfile, std::string& t,int& n, int& m, int& ll, int& d, int& k, std::vector<std::pair<int,std::string>>& result
 );
 int rmq
 (

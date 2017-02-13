@@ -9,3 +9,4 @@
 #include "sdsl/suffix_arrays.hpp"
 #include "sdsl/lcp.hpp"
 #include "clumps.h"
+#include <map>
