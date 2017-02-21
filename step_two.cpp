@@ -11,6 +11,22 @@
 #include "clumps.h"
 #include <map>
 
+int rmq(std::vector<int>& table, sdsl::lcp_bitcompressed<>& lcp, int& n, int& i, int& j) {
+std::cout << "inside rmq function" << std::endl;
+  int lgn = flog2(n);
+  if (i > j) {int tmp = j; j = i; i = tmp;}
+  i++; //for LCP
+std::cout << "checking range [" << i << "," << j << "]" << std::endl;
+  if (i == j) return i;
+  int k = flog2(j-i+1);
+  int a = table[i*lgn + k];
+std::cout << "a = " << a << std::endl;
+  int b = table[(j - (1<<k) + 1)*lgn + k];
+std::cout << "b = " << b << std::endl;
+std::cout << "exit rmq function" << std::endl;
+  return lcp[a]>lcp[b]?lcp[b]:lcp[a];
+}
+
 void constructM
 /*
 * function: 
@@ -26,6 +42,8 @@ std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M
 , int& d
 , std::vector<int>& E
 , int& m
+, std::vector<int>& table
+, int& n
 , std::ofstream& logfile
 )
 {
@@ -48,7 +66,12 @@ for (int i = 0; i <= r; i++){
 		sdsl::csa_bitcompressed<>::iterator iter_saj = std::find(sa.begin(), sa.end(), suffj);
 		int sai = std::distance(sa.begin(),iter_sai);
 		int saj = std::distance(sa.begin(),iter_saj);
-		int match = rmq(&lcp, &sai, &saj, &logfile);
+		/////////////////////////////////////////////////int match = rmq(&lcp, &sai, &saj, &logfile);
+		std::cout << "i = " << sai << std::endl;
+		std::cout << "j = " << saj << std::endl;
+		std::cout << "NOW CALLING RMQ FUNCTION before loop" << std::endl; 
+		int match = rmq(table, lcp, n, sai, saj);
+		std::cout << "lcp = " << match << std::endl << std::endl;
 		int pos = match;
 		int e = 1;
 		p = p * E[pos];
@@ -59,7 +82,12 @@ for (int i = 0; i <= r; i++){
 			iter_saj = std::find(sa.begin(), sa.end(), suffj);
 			sai = std::distance(sa.begin(),iter_sai);
 			saj = std::distance(sa.begin(),iter_saj);
-			match = rmq(&lcp, &sai, &saj, &logfile);
+			////////////////////////////////////////////////////match = rmq(&lcp, &sai, &saj, &logfile);
+			std::cout << "i = " << sai << std::endl;
+			std::cout << "j = " << saj << std::endl;
+			std::cout << "NOW CALLING RMQ FUNCTION inside loop" << std::endl; 
+			match = rmq(table, lcp, n, sai, saj);
+			std::cout << "lcp = " << match << std::endl << std::endl;
 			pos = match + pos + 1;
 			if (pos < m){
 				e++;
@@ -77,12 +105,15 @@ for (int i = 0; i <= r; i++){
 } //END_FUNCTION
 
 
-int rmq
+
+
+///////////////////////////////////////////////////////int rmq
 /*
 * function: naive range minimum query TODO implement non naive
 * time complexity: linear
 * space complexity: n/a
 */
+/*
 ( //PARAMS
 sdsl::lcp_bitcompressed<> *lcp
 , int *x
@@ -107,6 +138,60 @@ if ( j != (i+1) ){
 } //END_IF
 return min;
 } //END_FUNCTION(rmq)
+*/
+
+//solon's code TODO
+int flog2(int v) {
+  union { unsigned int u[2]; double d; } t;
+  t.u[1] = 0x43300000;
+  t.u[0] = v;
+  t.d -= 4503599627370496.0;
+  return (t.u[1] >> 20) - 0x3FF; //Decimal: 1023  Binary: 1111111111  Octal: 1777  Hexadecimal: 0x3FF
+}
+
+void rmq_preprocess(std::vector<int>& table, sdsl::lcp_bitcompressed<>& lcp, int n) {
+  int i, j;
+  int lgn = flog2(n);
+  std::cout << "\n\npre=processing rmq table" << std::endl;
+  std::cout << "n = " << n << std::endl;
+  std::cout << "log(n) = " << lgn << std::endl;
+  // initialize $table$ for the intervals with length $1$
+  for (i = 0; i < n; i++)
+  {
+    table[i*lgn] = i;
+    std::cout << "setting table[" << i*lgn << "] to " << i << std::endl;
+    std::cout << "pirnitng table" << std::endl;
+    for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
+    std::cout << std::endl;
+  }
+  // compute values from smaller to bigger intervals
+  for (j = 1; 1 << j <= n; j++)
+  {
+    for (i = 0; i + (1 << j) - 1 < n; i++)
+    {
+      std::cout << "i = " << i << " j = " << j << std::endl;
+      if (lcp[table[i*lgn + j - 1]] < lcp[table[(i + (1 << (j - 1)))*lgn + j - 1]])
+      {
+	std::cout << lcp[table[i*lgn + j - 1]] << " is less than " << lcp[table[(i + (1 << (j - 1)))*lgn + j - 1]] << std::endl;
+        table[i*lgn + j] = table[i*lgn + j - 1];
+	std::cout << "setting table[" << i*lgn + j << "] to " << table[i*lgn + j - 1] << std::endl;
+        std::cout << "pirnitng table" << std::endl;
+        for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
+        std::cout << std::endl;
+      }
+      else
+      {
+	std::cout << lcp[table[i*lgn + j - 1]] << " is more than/equal to " << lcp[table[(i + (1 << (j - 1)))*lgn + j - 1]] << std::endl;
+        table[i*lgn + j] = table[(i + (1 << (j - 1)))*lgn + j - 1];
+	std::cout << "setting table[" << i*lgn + j << "] to " << table[(i + (1 << (j - 1)))*lgn + j - 1] << std::endl;
+        std::cout << "pirnitng table" << std::endl;
+        for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
+        std::cout << std::endl;
+      }
+    }
+  }
+  std::cout << "pre-processing done\n\n" << std::endl;
+}
 
 void sortM
 /*

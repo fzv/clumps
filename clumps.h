@@ -1,3 +1,5 @@
+#ifndef CLUMPS_H
+#define CLUMPS_H
 /**********************
 * HEADERS & INCLUDES
 ***********************/
@@ -71,7 +73,7 @@ void constructM
 (
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M , int& r ,
 std::vector<int>& tt , sdsl::csa_bitcompressed<>& sa , sdsl::lcp_bitcompressed<>& lcp , int& d ,
-std::vector<int>& E, int& m , std::ofstream& logfile
+std::vector<int>& E, int& m , std::vector<int>& table , int& n , std::ofstream& logfile
 );
 void sortM(
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M
@@ -80,4 +82,12 @@ std::vector<std::vector<int>> getPValues
 (
 int& r , std::vector<std::vector<std::pair<int,std::pair<int,int>>>>& M
 );
+
+///
+
+int rmq(std::vector<int>& table, sdsl::lcp_bitcompressed<>& lcp, int& n, int& i, int& j);
+int flog2(int v);
+void rmq_preprocess(std::vector<int>& table, sdsl::lcp_bitcompressed<>& lcp, int n);
+
+#endif
 

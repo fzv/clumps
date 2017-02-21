@@ -18,11 +18,15 @@ void clumps(std::ofstream& logfile, std::string& t,int& n, int& m, int& ll, int&
 const time_t START = time(0);
 std::cout << asctime(localtime(&START));
 
+//
+std::cout << "Constructing Suffix Array" << std::endl;
+
 /* construct suffix array of t */
 sdsl::csa_bitcompressed<> sa;
 construct_im(sa, t, 1);
 
 /* TESTING ONLY: print suffix array */
+
 logfile << std::endl << "printing suffix array" << std::endl;
 for (sdsl::csa_bitcompressed<>::iterator iter = sa.begin(); iter != sa.end(); iter++)
 {
@@ -30,11 +34,17 @@ for (sdsl::csa_bitcompressed<>::iterator iter = sa.begin(); iter != sa.end(); it
 }
 logfile << std::endl;
 
+
+//
+std::cout << "Constructing Longest Common Prefix Array" << std::endl;
+
 /* constuct longest common prefix array of t */
 sdsl::lcp_bitcompressed<> lcp;
 construct_im(lcp, t, 1);
 
+
 /* TESTING ONLY: print LCP array */
+
 logfile << std::endl << "printing lcp array" << std::endl;
 for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); iter++)
 {
@@ -42,12 +52,26 @@ for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); 
 }
 logfile << std::endl;
 
+std::cout << "\n\nn = " << n << std::endl;
+std::cout << "size of lcp array = " << lcp.size() << std::endl;
+
+
 /* construct T' without frequently occuring patterns of length m */
+
+
+//
+std::cout << "Constructing T'" << std::endl;
+
 std::vector<int> tt( (n-m+1) , -1);
 int r = -1;
 constructT(tt , r , sa , n , m , lcp , ll);
 
 /* construct array E */
+
+
+//
+std::cout << "Constructing Array E" << std::endl;
+
 std::vector<int> PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}; // TODO add more numbers 
 std::vector<int>::const_iterator first = PRIME_NUMBERS.begin();
 std::vector<int>::const_iterator last = PRIME_NUMBERS.begin() + m;
@@ -60,10 +84,34 @@ for (int i=0; i<E.size(); i++)
 	logfile << E[i] << " "; logfile << std::endl;
 }
 
+/* prepare for RMQ */
+
+
+//
+std::cout << "Preparing for RMQ" << std::endl;
+
+int lgn = flog2(n+1);
+std::vector<int> table( ( (n+1)*lgn) , -1 );
+
+std::cout << "pirnitng table" << std::endl;
+for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
+std::cout << std::endl;
+
+rmq_preprocess(table, lcp, (n+1) );
+
+std::cout << "pirnitng table" << std::endl;
+for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
+std::cout << std::endl;
+
 /* construction of array M */
+
+
+//
+std::cout << "Constructing Array M" << std::endl;
+
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> M;
 M.reserve(r);
-constructM(M , r , tt , sa , lcp , d , E , m , logfile);
+constructM(M , r , tt , sa , lcp , d , E , m , table , n , logfile);
 
 /* sort M wrt p */
 sortM(M);
@@ -113,6 +161,10 @@ for (int i=0; i<parikh.size(); i++)
 
 /* prepare to report */
 std::pair<int,std::string> window_result;
+
+
+//
+std::cout << "Reading T'" << std::endl;
 
 /* read T' */
 for (int i = 0; i < n-m+1; i++)
