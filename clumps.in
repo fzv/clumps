@@ -1,11 +1,16 @@
-t	text file	paper.fas
+t	text file	short_oric.fas
 #
-l	length of window	7
-m	length of pattern	3
-d	number of degenerate symbols allowed	1
+l	length of window	245
+m	length of pattern	9
+d	number of degenerate symbols allowed	2
+k	number of occurrences	4
+#
+l	length of window	245
+m	length of pattern	11
+d	number of degenerate symbols allowed	0
+k	number of occurrences	4
+#
+l	length of window	245
+m	length of pattern	6
+d	number of degenerate symbols allowed	0
 k	number of occurrences	2
-#
-l	length of window	7
-m	length of pattern	4
-d	number of degenerate symbols allowed	1
-k	number of occurrences	1

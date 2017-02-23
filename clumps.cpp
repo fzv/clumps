@@ -16,7 +16,7 @@ void clumps(std::ofstream& logfile, std::string& t,int& n, int& m, int& ll, int&
 
 /* print time */
 const time_t START = time(0);
-std::cout << asctime(localtime(&START));
+std::cout << std::endl << asctime(localtime(&START));
 
 //
 std::cout << "Constructing Suffix Array" << std::endl;
@@ -26,14 +26,14 @@ sdsl::csa_bitcompressed<> sa;
 construct_im(sa, t, 1);
 
 /* TESTING ONLY: print suffix array */
-
+/*
 logfile << std::endl << "printing suffix array" << std::endl;
 for (sdsl::csa_bitcompressed<>::iterator iter = sa.begin(); iter != sa.end(); iter++)
 {
 	logfile << (*iter) << " ";
 }
 logfile << std::endl;
-
+*/
 
 //
 std::cout << "Constructing Longest Common Prefix Array" << std::endl;
@@ -44,16 +44,14 @@ construct_im(lcp, t, 1);
 
 
 /* TESTING ONLY: print LCP array */
-
+/*
 logfile << std::endl << "printing lcp array" << std::endl;
 for (sdsl::lcp_bitcompressed<>::iterator iter = lcp.begin(); iter != lcp.end(); iter++)
 {
 	logfile << (*iter) << " ";
 }
 logfile << std::endl;
-
-std::cout << "\n\nn = " << n << std::endl;
-std::cout << "size of lcp array = " << lcp.size() << std::endl;
+*/
 
 
 /* construct T' without frequently occuring patterns of length m */
@@ -93,25 +91,27 @@ std::cout << "Preparing for RMQ" << std::endl;
 int lgn = flog2(n+1);
 std::vector<int> table( ( (n+1)*lgn) , -1 );
 
-std::cout << "pirnitng table" << std::endl;
-for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
-std::cout << std::endl;
+
 
 rmq_preprocess(table, lcp, (n+1) );
 
-std::cout << "pirnitng table" << std::endl;
-for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
-std::cout << std::endl;
+
 
 /* construction of array M */
 
 
 //
-std::cout << "Constructing Array M" << std::endl;
+std::cout << "Began constructing Array M at ";
+const time_t STARTm = time(0);
+std::cout << asctime(localtime(&STARTm));
 
 std::vector<std::vector<std::pair<int,std::pair<int,int>>>> M;
 M.reserve(r);
 constructM(M , r , tt , sa , lcp , d , E , m , table , n , logfile);
+
+std::cout << "Finished constructing Array M at ";
+const time_t ENDm = time(0);
+std::cout << asctime(localtime(&ENDm));
 
 /* sort M wrt p */
 sortM(M);

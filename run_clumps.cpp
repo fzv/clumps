@@ -18,6 +18,7 @@ int main()
 std::ofstream logfile; 
 logfile.open("clumps.log");
 logfile << "LOG" << std::endl;
+std::cout << "CLUMPS" << std::endl;
 
 //read clumps.in
 std::ifstream clumpsFile("clumps.in");
@@ -105,9 +106,11 @@ std::string t = tstream.str();
 int n = t.length();
 
 /* TESTING ONLY: print text */
+/*
 logfile << std::endl << "printing text" << std::endl;
 logfile << t << std::endl;
 logfile << std::endl << "n = " << n << std::endl;
+*/
 
 std::vector<std::vector<std::pair<int,std::string>>> results;
 for (int run = 0; run != runs; run++)
@@ -174,6 +177,9 @@ for (pos = report.begin(); pos != report.end(); ++pos) {
 */
 
 //report if counter == runs
+
+std::cout << std::endl << "REPORTING CLUMPS" << std::endl;
+
 for (pos = report.begin(); pos != report.end(); ++pos) {
 	if (pos->second == runs)
 	{

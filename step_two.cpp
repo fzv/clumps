@@ -12,18 +12,18 @@
 #include <map>
 
 int rmq(std::vector<int>& table, sdsl::lcp_bitcompressed<>& lcp, int& n, int& i, int& j) {
-std::cout << "inside rmq function" << std::endl;
+//std::cout << "inside rmq function" << std::endl;
   int lgn = flog2(n);
   if (i > j) {int tmp = j; j = i; i = tmp;}
   i++; //for LCP
-std::cout << "checking range [" << i << "," << j << "]" << std::endl;
-  if (i == j) return i;
+//std::cout << "checking range [" << i << "," << j << "]" << std::endl;
+  if (i == j) return lcp[i];
   int k = flog2(j-i+1);
   int a = table[i*lgn + k];
-std::cout << "a = " << a << std::endl;
+//std::cout << "a = " << a << std::endl;
   int b = table[(j - (1<<k) + 1)*lgn + k];
-std::cout << "b = " << b << std::endl;
-std::cout << "exit rmq function" << std::endl;
+//std::cout << "b = " << b << std::endl;
+//std::cout << "exit rmq function" << std::endl;
   return lcp[a]>lcp[b]?lcp[b]:lcp[a];
 }
 
@@ -55,6 +55,7 @@ for (int i = 0; i <= r; i++)
 for (int i = 0; i <= r; i++){
 	for (int j = 0; j <= r; j++){
 		if (i != j){
+		logfile << "comparing ranks " << i << " and " << j << std::endl;
 		int p = 1;
 		//which suffix does rank i/j represent?
 		std::vector<int>::iterator iter_suffi = std::find(tt.begin(), tt.end(), i);
@@ -67,11 +68,11 @@ for (int i = 0; i <= r; i++){
 		int sai = std::distance(sa.begin(),iter_sai);
 		int saj = std::distance(sa.begin(),iter_saj);
 		/////////////////////////////////////////////////int match = rmq(&lcp, &sai, &saj, &logfile);
-		std::cout << "i = " << sai << std::endl;
-		std::cout << "j = " << saj << std::endl;
-		std::cout << "NOW CALLING RMQ FUNCTION before loop" << std::endl; 
+		//logfile << "i = " << sai << std::endl;
+		//logfile << "j = " << saj << std::endl;
+		//logfile << "NOW CALLING RMQ FUNCTION before loop" << std::endl; 
 		int match = rmq(table, lcp, n, sai, saj);
-		std::cout << "lcp = " << match << std::endl << std::endl;
+		//logfile << "lcp = " << match << std::endl << std::endl;
 		int pos = match;
 		int e = 1;
 		p = p * E[pos];
@@ -83,11 +84,11 @@ for (int i = 0; i <= r; i++){
 			sai = std::distance(sa.begin(),iter_sai);
 			saj = std::distance(sa.begin(),iter_saj);
 			////////////////////////////////////////////////////match = rmq(&lcp, &sai, &saj, &logfile);
-			std::cout << "i = " << sai << std::endl;
-			std::cout << "j = " << saj << std::endl;
-			std::cout << "NOW CALLING RMQ FUNCTION inside loop" << std::endl; 
+			//std::cout << "i = " << sai << std::endl;
+			//std::cout << "j = " << saj << std::endl;
+			//std::cout << "NOW CALLING RMQ FUNCTION inside loop" << std::endl; 
 			match = rmq(table, lcp, n, sai, saj);
-			std::cout << "lcp = " << match << std::endl << std::endl;
+			//std::cout << "lcp = " << match << std::endl << std::endl;
 			pos = match + pos + 1;
 			if (pos < m){
 				e++;
@@ -152,45 +153,45 @@ int flog2(int v) {
 void rmq_preprocess(std::vector<int>& table, sdsl::lcp_bitcompressed<>& lcp, int n) {
   int i, j;
   int lgn = flog2(n);
-  std::cout << "\n\npre=processing rmq table" << std::endl;
-  std::cout << "n = " << n << std::endl;
-  std::cout << "log(n) = " << lgn << std::endl;
+  //std::cout << "\n\npre=processing rmq table" << std::endl;
+  //std::cout << "n = " << n << std::endl;
+  //std::cout << "log(n) = " << lgn << std::endl;
   // initialize $table$ for the intervals with length $1$
   for (i = 0; i < n; i++)
   {
     table[i*lgn] = i;
-    std::cout << "setting table[" << i*lgn << "] to " << i << std::endl;
-    std::cout << "pirnitng table" << std::endl;
-    for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
-    std::cout << std::endl;
+   // std::cout << "setting table[" << i*lgn << "] to " << i << std::endl;
+   // std::cout << "pirnitng table" << std::endl;
+   // for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
+   // std::cout << std::endl;
   }
   // compute values from smaller to bigger intervals
   for (j = 1; 1 << j <= n; j++)
   {
     for (i = 0; i + (1 << j) - 1 < n; i++)
     {
-      std::cout << "i = " << i << " j = " << j << std::endl;
+      //std::cout << "i = " << i << " j = " << j << std::endl;
       if (lcp[table[i*lgn + j - 1]] < lcp[table[(i + (1 << (j - 1)))*lgn + j - 1]])
       {
-	std::cout << lcp[table[i*lgn + j - 1]] << " is less than " << lcp[table[(i + (1 << (j - 1)))*lgn + j - 1]] << std::endl;
+	//std::cout << lcp[table[i*lgn + j - 1]] << " is less than " << lcp[table[(i + (1 << (j - 1)))*lgn + j - 1]] << std::endl;
         table[i*lgn + j] = table[i*lgn + j - 1];
-	std::cout << "setting table[" << i*lgn + j << "] to " << table[i*lgn + j - 1] << std::endl;
-        std::cout << "pirnitng table" << std::endl;
-        for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
-        std::cout << std::endl;
+	//std::cout << "setting table[" << i*lgn + j << "] to " << table[i*lgn + j - 1] << std::endl;
+      //  std::cout << "pirnitng table" << std::endl;
+       // for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
+      //  std::cout << std::endl;
       }
       else
       {
-	std::cout << lcp[table[i*lgn + j - 1]] << " is more than/equal to " << lcp[table[(i + (1 << (j - 1)))*lgn + j - 1]] << std::endl;
+	//std::cout << lcp[table[i*lgn + j - 1]] << " is more than/equal to " << lcp[table[(i + (1 << (j - 1)))*lgn + j - 1]] << std::endl;
         table[i*lgn + j] = table[(i + (1 << (j - 1)))*lgn + j - 1];
-	std::cout << "setting table[" << i*lgn + j << "] to " << table[(i + (1 << (j - 1)))*lgn + j - 1] << std::endl;
-        std::cout << "pirnitng table" << std::endl;
-        for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
-        std::cout << std::endl;
+	//std::cout << "setting table[" << i*lgn + j << "] to " << table[(i + (1 << (j - 1)))*lgn + j - 1] << std::endl;
+      //  std::cout << "pirnitng table" << std::endl;
+      //  for (int i = 0; i != table.size(); i++) std::cout << table[i] << " ";
+      //  std::cout << std::endl;
       }
     }
   }
-  std::cout << "pre-processing done\n\n" << std::endl;
+ // std::cout << "pre-processing done\n\n" << std::endl;
 }
 
 void sortM
